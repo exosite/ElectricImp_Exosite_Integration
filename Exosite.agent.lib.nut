@@ -23,11 +23,11 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 class Exosite {
-	  static VERSION = "1.0.0";
+      static VERSION = "1.0.0";
 
      _baseURL              = null;
      _headers              = null;
-	  _token                = null;
+     _token                = null;
      // constructor
      // Returns: null
      // Parameters:
@@ -39,62 +39,59 @@ class Exosite {
         _baseURL = format("https://%s.m2.exosite.io/", productId);
                      "Authorization" : format("Bearer %s", apiToken)};
 
-		 headers["Authorization"] <- "Token " + _token;
-		 headers["Content-Type"] <- "application/x-www-form-urlencoded; charset=utf-8";
-		 _headers = headers;
+       _headers["Content-Type"] <- "application/x-www-form-urlencoded; charset=utf-8";
     }
 
-	// createDevice - Create a new device for the product that was passed in to the constructor
-	// Returns: null
-	// Parameters:
-	//      deviceID (required) : string - deviceID
-	//
-	function createDevice (deviceID) {
-		// Create/Provision a new device in the product
-		// POST /provision/activate
-		local req = http.post(format("%s/provision/activate", _baseURL), _headers, format("id=%s", deviceID));
-		req.sendasync(create_device_callback(res).bindenv(this));
-	}
+    // provision - Create a new device for the product that was passed in to the constructor
+    // Returns: null
+    // Parameters:
+    //      deviceID (required) : string - deviceID
+    //
+    function provision (deviceID) {
+        // Create/Provision a new device in the product
+        // POST /provision/activate
+        local req = http.post(format("%s/provision/activate", _baseURL), _headers, format("id=%s", deviceID));
+        req.sendasync(create_device_callback(res).bindenv(this));
+    }
 
-	function create_device_callback(response) {
-		local err, data;
-		if (response.statuscode == 204) { //Success
-			// Need jsondecode()?
-			_token = response.data;
-		}
-	}
+    function create_device_callback(response) {
+        local err, data;
+        if (response.statuscode == 204) { //Success
+            // Need jsondecode()?
+            _token = response.data;
+            _headers["X-Exosite-CIK"]  <-  _token;
+        }
+    }
 
-	function write_data (key, value) {
-        _local_headers = { "X-Exosite-CIK"  : _token };
-		local req = http.post(format("%s/onep:v1/stack/alias", _baseURL), _local_headers, format("%s=%s", key, value));
-		req.sendasync(res);
-	}
+    function write_data (key, value) {
+        local req = http.post(format("%s/onep:v1/stack/alias", _baseURL), _headers, format("%s=%s", key, value));
+        req.sendasync(res);
+    }
 
-	function write_table (dataTable) {
-        _local_headers = { "X-Exosite-CIK"  : _token };
-		if (dataTable.len() == 0) {
-			return;
-		}
+    function write_table (dataTable) {
+        if (dataTable.len() == 0) {
+            return;
+        }
 
-		data_in_string = ""
-		foreach (key, value in dataTable) {
-			data_in_string = data_in_string + format("%s=%s&", key, value);
-		}
+        data_in_string = ""
+        foreach (key, value in dataTable) {
+            data_in_string = data_in_string + format("%s=%s&", key, value);
+        }
 
-		//Strip off the trailing '&' character
-		data_in_string = data_in_string.slice(0, data_in_string.len()-1)
+        //Strip off the trailing '&' character
+        data_in_string = data_in_string.slice(0, data_in_string.len()-1)
 
-		local req = http.post(format("%s/onep:v1/stack/alias", _baseURL), _local_headers, format("%s=%s", key, value));
-		req.sendasync(res);
-	}
+        local req = http.post(format("%s/onep:v1/stack/alias", _baseURL), _headers, format("%s=%s", key, value));
+        req.sendasync(res);
+    }
 
-	function response_error_check(respose) {
-		// 200 - Ok           - Successful Request, returning requested values
-		// 204 - No Content   - Successful Request, nothing will be returned
-		// 4xx - Client Error - There was an error with the request by the client
-		// 401 - Unauthorized - Missing or Invalid Credentials
-		// 5xx - Server Error - Unhandled server error. Contact Support
+    function response_error_check(respose) {
+        // 200 - Ok           - Successful Request, returning requested values
+        // 204 - No Content   - Successful Request, nothing will be returned
+        // 4xx - Client Error - There was an error with the request by the client
+        // 401 - Unauthorized - Missing or Invalid Credentials
+        // 5xx - Server Error - Unhandled server error. Contact Support
 
-		return 1;
-	}
+        return 1;
+    }
 }
