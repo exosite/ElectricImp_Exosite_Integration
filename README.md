@@ -13,7 +13,6 @@ This library provides integration with [Exosite](https://exosite.com/) by wrappi
 - [ ] Release to ElectricImp
 
 ## What this does (Stage 1)
->>>>>>> 656f59d54b7c1f843d570b4a7423bb06b5880ff1
 Provides an API wrapper to create/provision a device in Murano \
 Provides an API wrapper for the data_in signal to Murano
 - [ ] Provision
