@@ -22,20 +22,23 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-
-const product_id = "c449gfcd11ky00000";
-const device_id = "deadbeef123";
-
 class MuranoTestCase extends ImpTestCase {
-	_deviceId    = null;
-	_exosite_app = null;
+    product_id = "c449gfcd11ky00000";
+    token = "uLq75fA6ynYNzVLCMTNs567EC9RQSpGTJ1QPUZLA" //...need to sort this out
+    device_id = "deadbeef123";
+    _exosite_app = null;
 
-	function setUp() {
-		_deviceId = device_id;
-		_exosite_app = Exosite(product_id);
-	}
+    function setUp() {
+        _exosite_app = Exosite(product_id);
+    }
 
-	function test01_createDevice() {
-		this.assertTrue(true);
-	}
+    function test01_createDevice() {
+        _exosite_app.provision(device_id);
+    }
+
+    function test02_writeData() {
+        local data_in = {};
+        data_in["testValue"] <- 3;
+        _exosite_app.write_data(data_in);
+    }
 }

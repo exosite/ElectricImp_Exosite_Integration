@@ -22,11 +22,13 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
+//#require "Promise.lib.nut:4.0.0"
+
 class Exosite {
       static VERSION = "1.0.0";
 
      _baseURL              = null;
-     _headers              = null;
+     _headers              = {};
      _token                = null;
      // constructor
      // Returns: null
@@ -37,8 +39,10 @@ class Exosite {
      //                                     permissions.
     constructor(productId) {
         _baseURL = format("https://%s.m2.exosite.io/", productId);
-                     "Authorization" : format("Bearer %s", apiToken)};
+        //_baseURL = format("https://%s.apps.exosite.io/", productId);
 
+        server.log("ARJ DEBUG: \n");
+        server.log(_baseURL);
        _headers["Content-Type"] <- "application/x-www-form-urlencoded; charset=utf-8";
     }
 
@@ -50,47 +54,54 @@ class Exosite {
     function provision (deviceID) {
         // Create/Provision a new device in the product
         // POST /provision/activate
-        local req = http.post(format("%s/provision/activate", _baseURL), _headers, format("id=%s", deviceID));
-        req.sendasync(create_device_callback(res).bindenv(this));
+        local activate_url = format("%sprovision/activate", _baseURL);
+        server.log("activate_url: " + activate_url + "\n");
+        local req = http.post(activate_url, _headers, format("id=%s", deviceID));
+        req.sendasync(provision_callback);
     }
 
-    function create_device_callback(response) {
+    function provision_callback(response) {
         local err, data;
-        if (response.statuscode == 204) { //Success
+        server.log("ARJ DEBUG: \n");
+        server.log(response.statuscode + "\n");
+        server.log(response.body + "\n");
+
+        if (response.statuscode == 200) { //Success
             // Need jsondecode()?
-            _token = response.data;
-            _headers["X-Exosite-CIK"]  <-  _token;
+            _token <- response.body;
+            server.log("token: " + _token + "\n");
         }
     }
 
-    function write_data (key, value) {
-        local req = http.post(format("%s/onep:v1/stack/alias", _baseURL), _headers, format("%s=%s", key, value));
-        req.sendasync(res);
-    }
-
-    function write_table (dataTable) {
-        if (dataTable.len() == 0) {
-            return;
+    function write_data (table) {
+        local counter = 0;
+        if (_token == null) {
+            server.log("Token NULL\n");
+            counter = counter + 1;
+            if (counter > 20) {
+                return 1;
+            }
+            imp.wakeup(10, write_data(table).bindenv(this));
         }
 
-        data_in_string = ""
-        foreach (key, value in dataTable) {
-            data_in_string = data_in_string + format("%s=%s&", key, value);
-        }
-
-        //Strip off the trailing '&' character
-        data_in_string = data_in_string.slice(0, data_in_string.len()-1)
-
-        local req = http.post(format("%s/onep:v1/stack/alias", _baseURL), _headers, format("%s=%s", key, value));
-        req.sendasync(res);
+        server.log("writing data with token: " + _token + "\n");
+        _headers["X-Exosite-CIK"]  <-  _token;
+        local req = http.post(format("%sonep:v1/stack/alias", _baseURL), _headers, "data_in=" + http.jsonencode(table));
+        req.sendasync(response_error_check);
     }
 
-    function response_error_check(respose) {
+    function response_error_check(response) {
         // 200 - Ok           - Successful Request, returning requested values
         // 204 - No Content   - Successful Request, nothing will be returned
         // 4xx - Client Error - There was an error with the request by the client
+        // 409 - Conflict     - (Example: Provisioning a provisioned device)
         // 401 - Unauthorized - Missing or Invalid Credentials
         // 5xx - Server Error - Unhandled server error. Contact Support
+
+        server.log("ARJ DEBUG: \n");
+        //server.log(http.jsonencode(response));
+        server.log(response.statuscode + "\n");
+        server.log(response.body + "\n");
 
         return 1;
     }
