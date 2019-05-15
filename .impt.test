@@ -1,0 +1,12 @@
+{
+  "deviceGroupId": "7490d128-84ec-85fb-104e-ebd88cef639f",
+  "timeout": 30,
+  "stopOnFail": false,
+  "allowDisconnect": false,
+  "builderCache": false,
+  "testFiles": [
+    "tests/MuranoTest.agent.test.nut"
+  ],
+  "agentFile": "Exosite.agent.lib.nut",
+  "deviceFile": "Exosite.device.nut"
+}
