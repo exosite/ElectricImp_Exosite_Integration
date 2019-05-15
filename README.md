@@ -15,7 +15,7 @@ This library provides integration with [Exosite](https://exosite.com/) by wrappi
 ## What this does (Stage 1)
 Provides an API wrapper to create/provision a device in Murano \
 Provides an API wrapper for the data_in signal to Murano
-- [x] Provision
+- [x] Provision (via password)
 - [x] Write Data
 
 
