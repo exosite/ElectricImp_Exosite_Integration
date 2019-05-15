@@ -22,13 +22,14 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-//#require "Promise.lib.nut:4.0.0"
-
 class Exosite {
       static VERSION = "1.0.0";
 
      _baseURL              = null;
      _headers              = {};
+     _deviceID             =  null;
+     _password             =  null;
+
      // constructor
      // Returns: null
      // Parameters:
@@ -36,38 +37,39 @@ class Exosite {
      //      apiToken (required) : string - Token for Exosite application, used to authorize
      //                                     all HTTP requests, must have device and devices
      //                                     permissions.
-    constructor(productId) {
+    constructor(productId, deviceId, password) {
         _baseURL = format("https://%s.m2.exosite.io/", productId);
-        //_baseURL = format("https://%s.apps.exosite.io/", productId);
 
-        server.log("ARJ DEBUG: \n");
-        server.log(_baseURL);
        _headers["Content-Type"] <- "application/x-www-form-urlencoded; charset=utf-8";
+       _deviceID = deviceId;
+       _password = password;
     }
 
     // provision - Create a new device for the product that was passed in to the constructor
-    // Returns: CIK token
+    // Returns: 
     // Parameters:
-    //      deviceID (required) : string - deviceID
+    //      
     //
-    function provision (deviceID) {
+    function provision () {
         // Create/Provision a new device in the product
         // POST /provision/activate
         return Promise(function(resolve, reject){
             local activate_url = format("%sprovision/activate", _baseURL);
-            server.log("activate_url: " + activate_url + "\n");
-            local req = http.post(activate_url, _headers, format("id=%s", deviceID));
+            local data = format("id=%s&password=%s", _deviceID, _password);
+            local req = http.post(activate_url, _headers, data);
             req.sendasync(function(response){
-                return (response.statuscode == 200) ? resolve(response.body) : reject("Provisioning Failed");
+                return (response.statuscode == 200 || response.statuscode == 204) ? resolve(response.body) : reject("Provisioning Failed: " + response.statuscode);
             }.bindenv(this));
         }.bindenv(this))
     }
 
-    function write_data (token, table) {
+    function write_data (table) {
         local counter = 0;
 
-        server.log("(write_data)writing data with token: " + token + "\n");
-        _headers["X-Exosite-CIK"]  <-  token;
+        local passwordHash = "Basic " + http.base64encode(_deviceID + ":" + _password);
+        _headers["Authorization"]  <-  passwordHash;
+        server.log(http.jsonencode(table));
+
         local req = http.post(format("%sonep:v1/stack/alias", _baseURL), _headers, "data_in=" + http.jsonencode(table));
         req.sendasync(response_error_check);
     }
@@ -78,13 +80,23 @@ class Exosite {
         // 4xx - Client Error - There was an error with the request by the client
         // 409 - Conflict     - (Example: Provisioning a provisioned device)
         // 401 - Unauthorized - Missing or Invalid Credentials
+        // 415 - Unsupported media type - missing header
         // 5xx - Server Error - Unhandled server error. Contact Support
 
-        server.log("ARJ DEBUG: \n");
+        server.log("Server Response: \n");
         //server.log(http.jsonencode(response));
         server.log(response.statuscode + "\n");
         server.log(response.body + "\n");
 
-        return 1;
+        return 0;
     }
 }
+
+local product_id = "c449gfcd11ky00000";
+local device_id  = "feed123";
+local password   = "123456789ABCDEabcdeF";
+
+exosite_agent <- Exosite(product_id, device_id, password);
+exosite_agent.provision();
+
+device.on("reading.sent", exosite_agent.write_data.bindenv(exosite_agent));

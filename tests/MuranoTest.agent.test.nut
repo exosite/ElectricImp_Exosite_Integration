@@ -24,34 +24,34 @@
 
 class MuranoTestCase extends ImpTestCase {
     product_id = "c449gfcd11ky00000";
-    _token = "uLq75fA6ynYNzVLCMTNs567EC9RQSpGTJ1QPUZLA" //...need to sort this out
-    device_id = "deadbeef123";
+    device_id = "feed123";
+    password = "2123456789jABCDEabcde";
+    _token = null;
     _exosite_app = null;
+    _test_result = true;
 
     function setUp() {
-        _exosite_app = Exosite(product_id);
+        _exosite_app = Exosite(product_id, device_id, password);
     }
 
     function test01_createDevice_and_writeData() {
-         _exosite_app.provision(device_id).then(function(token){
-            return Promise(function(resolve, reject){
-
-                assert(token != null);
-
-                server.log("promise token: " + token + "\n");
-                _token = token;
-                local data_in = {};
-                data_in["testValue"] <- 3;
-                server.log("test token: " + _token + "\n");
-                _exosite_app.write_data(_token, data_in);
-            }.bindenv(this))
-        }.bindenv(this));
+        this.info("Starting test");
+         //_exosite_app.provision().then(write_data.bindenv(this), fail_test.bindenv(this));
+         //write_data(null);
     }
 
-    function write_data(token){
+    function write_data(response){
+            this.info("Writing Data");
+            return Promise(function(resolve, reject){
+
+                local data_in = {};
+                data_in["testValue"] <- 3;
+                _exosite_app.write_data(data_in);
+            }.bindenv(this))
     }
 
     function fail_test(rejection){
-
+        this.info("REJECTED!!!!!!!!!1");
+        this.info("Failed test: " + rejection);
     }
 }
