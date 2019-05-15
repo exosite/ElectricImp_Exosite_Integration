@@ -29,7 +29,6 @@ class Exosite {
 
      _baseURL              = null;
      _headers              = {};
-     _token                = null;
      // constructor
      // Returns: null
      // Parameters:
@@ -47,45 +46,28 @@ class Exosite {
     }
 
     // provision - Create a new device for the product that was passed in to the constructor
-    // Returns: null
+    // Returns: CIK token
     // Parameters:
     //      deviceID (required) : string - deviceID
     //
     function provision (deviceID) {
         // Create/Provision a new device in the product
         // POST /provision/activate
-        local activate_url = format("%sprovision/activate", _baseURL);
-        server.log("activate_url: " + activate_url + "\n");
-        local req = http.post(activate_url, _headers, format("id=%s", deviceID));
-        req.sendasync(provision_callback);
+        return Promise(function(resolve, reject){
+            local activate_url = format("%sprovision/activate", _baseURL);
+            server.log("activate_url: " + activate_url + "\n");
+            local req = http.post(activate_url, _headers, format("id=%s", deviceID));
+            req.sendasync(function(response){
+                return (response.statuscode == 200) ? resolve(response.body) : reject("Provisioning Failed");
+            }.bindenv(this));
+        }.bindenv(this))
     }
 
-    function provision_callback(response) {
-        local err, data;
-        server.log("ARJ DEBUG: \n");
-        server.log(response.statuscode + "\n");
-        server.log(response.body + "\n");
-
-        if (response.statuscode == 200) { //Success
-            // Need jsondecode()?
-            _token <- response.body;
-            server.log("token: " + _token + "\n");
-        }
-    }
-
-    function write_data (table) {
+    function write_data (token, table) {
         local counter = 0;
-        if (_token == null) {
-            server.log("Token NULL\n");
-            counter = counter + 1;
-            if (counter > 20) {
-                return 1;
-            }
-            imp.wakeup(10, write_data(table).bindenv(this));
-        }
 
-        server.log("writing data with token: " + _token + "\n");
-        _headers["X-Exosite-CIK"]  <-  _token;
+        server.log("(write_data)writing data with token: " + token + "\n");
+        _headers["X-Exosite-CIK"]  <-  token;
         local req = http.post(format("%sonep:v1/stack/alias", _baseURL), _headers, "data_in=" + http.jsonencode(table));
         req.sendasync(response_error_check);
     }
