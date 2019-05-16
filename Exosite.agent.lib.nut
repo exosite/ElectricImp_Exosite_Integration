@@ -25,12 +25,17 @@
 class Exosite {
       static VERSION = "1.0.0";
 
+     //Public settings variables
+     debugMode             = false;
+     configIORefreshTime   = 60; // Change for number of seconds to wait and refresh the config_io file
+
+
+     //Private variables
      _baseURL              = null;
      _headers              = {};
-     _deviceID             =  null;
+     _deviceId             =  null;
      _password             =  null;
-     _config_io            = "";
-     config_io_refresh_time = 60; // Change for number of seconds to wait and refresh the config_io file
+     _configIO             = "";
 
      // constructor
      // Returns: null
@@ -47,17 +52,17 @@ class Exosite {
         _headers["Accept"] <- "application/x-www-form-urlencoded; charset=utf-8";
         _headers["Authorization"]  <-  passwordHash;
 
-        _deviceID = deviceId;
+        _deviceId = deviceId;
         _password = password;
 
         //Start polling for config_io
-        fetch_config_io();
+        fetchConfigIO();
     }
 
     // debug - prints out to server.log if the debug flag is true
-    function debug(log_val){
-        if (debug_mode) {
-            server.log(log_val);
+    function debug(logVal){
+        if (debugMode) {
+            server.log(logVal);
         }
     }
 
@@ -65,10 +70,10 @@ class Exosite {
     // Returns:
     // Parameters:
     //
-    function provision () {
+    function provision() {
         return Promise(function(resolve, reject){
                 local activate_url = format("%sprovision/activate", _baseURL);
-                local data = format("id=%s&password=%s", _deviceID, _password);
+                local data = format("id=%s&password=%s", _deviceId, _password);
                 local req = http.post(activate_url, _headers, data);
                 req.sendasync(function(response){
                         return (response.statuscode == 200 || response.statuscode == 204) ? resolve(response.body) : reject("Provisioning Failed: " + response.statuscode);
@@ -76,61 +81,61 @@ class Exosite {
                 }.bindenv(this))
     }
 
-    // write_data - Write a table to the "data_in" channel in the Exosite product
+    // writeData - Write a table to the "data_in" channel in the Exosite product
     // Returns: null
     // Parameters: 
     //      table (reqired) : string - The table to be written to "data_in".
     //                                 This table should conform to the config_io for the device.
     //                                 That is, each key should match a channel identifier and the value type should match the channel's data type.
     //
-    function write_data (table) {
-        debug("write_data: " + http.jsonencode(table));
+    function writeData(table) {
+        debug("writeData: " + http.jsonencode(table));
         debug("headers: " + http.jsonencode(_headers));
 
         local req = http.post(format("%sonep:v1/stack/alias", _baseURL), _headers, "data_in=" + http.jsonencode(table));
-        req.sendasync(response_error_check.bindenv(this));
+        req.sendasync(responseErrorCheck.bindenv(this));
     }
 
-    // fetch_config_io - Fetches the config_io from the Exosite server and writes it back. This is how the device acknowledges the config_io
+    // fetchConfigIO - Fetches the config_io from the Exosite server and writes it back. This is how the device acknowledges the config_io
     // Returns: null
     // Parameters: None
     //
-    function fetch_config_io() {
+    function fetchConfigIO() {
         debug("fetching config_io");
         debug("headers: " + http.jsonencode(_headers));
 
         local req = http.get(format("%sonep:v1/stack/alias?config_io", _baseURL), _headers);
-        req.sendasync(fetch_config_io_cb.bindenv(this));
+        req.sendasync(fetchConfigIOCallback.bindenv(this));
 
-        imp.wakeup(config_io_refresh_time, fetch_config_io.bindenv(this));
+        imp.wakeup(config_io_refresh_time, fetchConfigIO.bindenv(this));
     }
 
-    // fetch_config_io_cb - Callback for the fetch_config_io request
+    // fetchConfigIO - Callback for the fetchConfigIO request
     // Returns: null
     // Parameters:
     //             response - the response object for the http request
-    function fetch_config_io_cb(response) {
-        write_config_io(response.body);
+    function fetchConfigIOCallback(response) {
+        writeConfigIO(response.body);
     }
 
-    // write_config_io - Writes a config via http post request
+    // writeConfigIO - Writes a config via http post request
     // Returns: null
     // Parameters:
     //            config_io : string - the config_io to post formatted as "string=<config_io_value>"
-    function write_config_io(config_io){
-        debug("write_config_io: " + config_io);
+    function writeConfigIO(config_io){
+        debug("writeConfigIO: " + config_io);
         debug("headers: " + http.jsonencode(_headers));
 
-        _config_io = config_io;
-        local req = http.post(format("%sonep:v1/stack/alias", _baseURL), _headers, _config_io);
-        req.sendasync(response_error_check.bindenv(this));
+        _configIO = config_io;
+        local req = http.post(format("%sonep:v1/stack/alias", _baseURL), _headers, _configIO);
+        req.sendasync(responseErrorCheck.bindenv(this));
     }
 
-    // response_error_check - Checks the status code of an http response and prints to the server log
+    // responseErrorCheck - Checks the status code of an http response and prints to the server log
     // Returns: The response's status code
     // Parameters:
     //            - response : object - response object from the http request
-    function response_error_check(response) {
+    function responseErrorCheck(response) {
         // 200 - Ok           - Successful Request, returning requested values
         // 204 - No Content   - Successful Request, nothing will be returned
         // 4xx - Client Error - There was an error with the request by the client
@@ -147,15 +152,15 @@ class Exosite {
 }
 
 //TODO: Move to own agent (out of library)
-local product_id = "c449gfcd11ky00000";
-local device_id  = "feed123";
+local productId = "c449gfcd11ky00000";
+local deviceId  = "feed123";
 local password   = "123456789ABCDEabcdeF";
 
-exosite_agent <- Exosite(product_id, device_id, password);
-exosite_agent.provision();
+exositeAgent <- Exosite(productId, deviceId, password);
+exositeAgent.provision();
 
-exosite_agent.debug_mode = true; //Default to false
-exosite_agent.config_io_refresh_time = 15; // Change for number of seconds to wait and refresh the config_io file
+exositeAgent.debugMode = true; //Default to false
+exositeAgent.configIORefreshTime = 15; // Change for number of seconds to wait and refresh the config_io file
 
-device.on("reading.sent", exosite_agent.write_data.bindenv(exosite_agent));
+device.on("reading.sent", exositeAgent.writeData.bindenv(exositeAgent));
 

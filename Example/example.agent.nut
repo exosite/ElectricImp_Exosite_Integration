@@ -24,14 +24,14 @@
 
 #require "Exosite.agent.lib.nut:1.0.0"
 
-local product_id = "c449gfcd11ky00000";
-local device_id  = "feed123";
+local productId = "c449gfcd11ky00000";
+local deviceId  = "feed123";
 local password   = "123456789ABCDEabcdeF";
 
-exosite_agent <- Exosite(product_id, device_id, password);
-exosite_agent.provision();
+exositeAgent <- Exosite(productId, deviceId, password);
+exositeAgent.provision();
 
-exosite_agent.debug_mode = true; //Default to false
-exosite_agent.config_io_refresh_time = 15; // Change for number of seconds to wait and refresh the config_io file
+exositeAgent.debugMode = true; //Default to false
+exositeAgent.configIORefreshTime = 15; // Change for number of seconds to wait and refresh the config_io file
 
-device.on("reading.sent", exosite_agent.write_data.bindenv(exosite_agent));
+device.on("reading.sent", exositeAgent.writeData.bindenv(exositeAgent));

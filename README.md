@@ -36,8 +36,8 @@ Enable configuration via 'config_io'
 ## General Usage
 ### On the device
 ```
-data.var1 <- get_var1();
-data.var1 <- get_var2();
+data.var1 <- getVar1();
+data.var1 <- getVar2();
 
 agent.send(“reading.sent”, data);
 ```
@@ -46,29 +46,29 @@ agent.send(“reading.sent”, data);
 ```
 Require “Exosite.agent.lib.nut.1.0.0”
 
-local product_id = <my_product_id>;
-local device_id = <my_device_id>;
+local productId = <my_product_id>;
+local deviceId = <my_device_id>;
 local password = <my password>;
 
-exosite_agent <- Exosite(product_id, device_id, password);
-exosite_agent.provision();
+exositeAgent <- Exosite(productId, deviceId, password);
+exositeAgent.provision();
 
-device.on(“reading.sent”, exosite_agent.write_data.bindenv(exosite_agent));
+device.on(“reading.sent”, exositeAgent.writeData.bindenv(exositeAgent));
 ```
 
 ## Variable Settings
 Some variables can be changed in the class instance of an Exosite agent. These variables and their effects are listed below.
 
-### debug\_mode
+### debugMode
 Debug mode logs additional messages to the ElectricImp server for added debugging. \
-The debug mode is off (false) by default, and can be enabled by setting `debug_mode` to true.
+The debug mode is off (false) by default, and can be enabled by setting `debugMode` to true.
 ```
-exosite_agent.debug_mode = true;
+exositeAgent.debugMode = true;
 ```
-### config\_io\_refresh\_time
-The agent periodically checks the config_io set on the server. The length of time between checks can be set with the config_io_refresh_time variable. By default, the agent waits 60 seconds before refreshing the config_io.
+### configIORefreshTime
+The agent periodically checks the config_io set on the server. The length of time between checks can be set with the configIORefreshTime variable. By default, the agent waits 60 seconds before refreshing the config_io.
 ```
-exosite_agent.config_io_refresh_time = 10;
+exositeAgent.configIORefreshTime = 10;
 ```
 
 ## Available Functions
@@ -84,22 +84,22 @@ Nothing
 
 **Example**
 ```
-local product_id = "<Murano Product ID>";
-local device_id = "my_device_0001";
+local productId = "<Murano Product ID>";
+local deviceId = "my_device_0001";
 local password = "123456789ABCabcXYZxyz"";
 
-exosite_agent <- Exosite(product_id, device_id, password);
+exositeAgent <- Exosite(productId, deviceId, password);
 ```
 
 ### provision() ###
 Provisions the device with Exosite's Murano platform using the information provided in the constructor.
 
-### write\_data(table) ###
+### writeData(table) ###
 | Parameter | Type | Required | Description |
 | -- | -- | -- | -- |
 | table | table object | yes | Table to be written to data\_in. Each key should match a channel identifier in the config\_io |
 
 **Example Usage**
 ```
-device.on("reading.sent", exosite_agent.write_data.bindenv(exosite_agent));
+device.on("reading.sent", exositeAgent.writeData.bindenv(exositeAgent));
 ```

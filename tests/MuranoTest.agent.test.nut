@@ -23,37 +23,32 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 class MuranoTestCase extends ImpTestCase {
-    product_id = "c449gfcd11ky00000";
-    device_id = "feed123";
+    productId = "c449gfcd11ky00000";
+    deviceId = "feed123";
     password = "123456789ABCDEabcdeF";
     _token = null;
-    _exosite_app = null;
-    _test_result = true;
+    _exositeAgent = null;
 
     function setUp() {
-        _exosite_app = Exosite(product_id, device_id, password);
+        _exositeAgent = Exosite(productId, deviceId, password);
     }
 
     function test01_createDevice_and_writeData() {
         this.info("Starting test");
-         _exosite_app.provision().then(write_data.bindenv(this), fail_test.bindenv(this));
+         _exositeAgent.provision().then(writeData.bindenv(this), failTest.bindenv(this));
     }
 
-    function write_data(response){
+    function writeData(response){
             this.info("Writing Data");
             return Promise(function(resolve, reject){
 
-                local data_in = {};
-                data_in["testValue"] <- 3;
-                _exosite_app.write_data(data_in);
+                local dataIN = {};
+                dataIN["testValue"] <- 3;
+                _exositeAgent.write_data(dataIN);
             }.bindenv(this))
     }
 
-    function test02_fetch_config_io() {
-        //_exosite_app.fetch_config_io();
-    }
-
-    function fail_test(rejection){
+    function failTest(rejection){
         this.info("REJECTED!!!!!!!!!1");
         this.info("Failed test: " + rejection);
     }
