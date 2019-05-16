@@ -31,4 +31,7 @@ local password   = "123456789ABCDEabcdeF";
 exosite_agent <- Exosite(product_id, device_id, password);
 exosite_agent.provision();
 
+exosite_agent.debug_mode = true; //Default to false
+exosite_agent.config_io_refresh_time = 15; // Change for number of seconds to wait and refresh the config_io file
+
 device.on("reading.sent", exosite_agent.write_data.bindenv(exosite_agent));

@@ -97,7 +97,9 @@ class Exosite {
     // Parameters: None
     //
     function fetch_config_io() {
+        debug("fetching config_io");
         debug("headers: " + http.jsonencode(_headers));
+
         local req = http.get(format("%sonep:v1/stack/alias?config_io", _baseURL), _headers);
         req.sendasync(fetch_config_io_cb.bindenv(this));
 
@@ -137,7 +139,6 @@ class Exosite {
         // 401 - Unauthorized - Missing or Invalid Credentials
         // 415 - Unsupported media type - missing header
         // 5xx - Server Error - Unhandled server error. Contact Support
-
         debug("Server Response: \n");
         debug(response.statuscode + "\n");
         debug(response.body + "\n");
@@ -147,7 +148,6 @@ class Exosite {
 }
 
 //TODO: Move to own agent (out of library)
-
 local product_id = "c449gfcd11ky00000";
 local device_id  = "feed123";
 local password   = "123456789ABCDEabcdeF";
