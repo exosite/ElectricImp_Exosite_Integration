@@ -34,7 +34,7 @@ Enable configuration via 'config_io'
 - [ ] Record
 
 ## General Usage
-On the device
+### On the device
 ```
 data.var1 <- get_var1();
 data.var1 <- get_var2();
@@ -42,7 +42,7 @@ data.var1 <- get_var2();
 agent.send(“reading.sent”, data);
 ```
 
-In the agent
+### In the agent
 ```
 Require “Exosite.agent.lib.nut.1.0.0”
 
@@ -57,7 +57,27 @@ device.on(“reading.sent”, exosite_agent.write_data.bindenv(exosite_agent));
 ```
 
 ## Variable Settings
-debug\_mode \
-config\_io\_refresh\_time \
+Some variables can be changed in the class instance of an Exosite agent. These variables and their effects are listed below.
+
+### debug\_mode
+Debug mode logs additional messages to the ElectricImp server for added debugging. \
+The debug mode is off (false) by default, and can be enabled by setting `debug_mode` to true.
+```
+exosite_agent.debug_mode = true;
+```
+### config\_io\_refresh\_time
+The agent periodically checks the config_io set on the server. The length of time between checks can be set with the config_io_refresh_time variable. By default, the agent waits 60 seconds before refreshing the config_io.
+```
+exosite_agent.config_io_refresh_time = 10;
+```
 
 ## Available Functions
+### Constructor
+**Parameters** \
+product_id \
+device_id \
+password 
+
+
+### Provision
+### Write Data
