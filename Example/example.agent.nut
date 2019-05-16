@@ -26,7 +26,7 @@
 
 local productId = "c449gfcd11ky00000";
 local deviceId  = "feed123";
-local password   = "123456789ABCDEabcdeF";
+local password  = "123456789ABCDEabcdeF";
 
 exositeAgent <- Exosite(productId, deviceId, password);
 exositeAgent.provision();

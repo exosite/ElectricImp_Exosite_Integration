@@ -26,30 +26,42 @@ class MuranoTestCase extends ImpTestCase {
     productId = "c449gfcd11ky00000";
     deviceId = "feed123";
     password = "123456789ABCDEabcdeF";
-    _token = null;
     _exositeAgent = null;
 
     function setUp() {
-        _exositeAgent = Exosite(productId, deviceId, password);
+        _exositeAgent = Exosite(productId, null/*deviceId*/, password);
     }
 
-    function test01_createDevice_and_writeData() {
-        this.info("Starting test");
-         _exositeAgent.provision().then(writeData.bindenv(this), failTest.bindenv(this));
+    function test01_createDevice() {
+        return provision_test();
+    }
+
+    function test02_autoDeviceID() {
+        local inputString = "https://agent.electricimp.com/fyofyVhlsf7C";
+        local expectedString =  "fyofyVhlsf7C";
+
+        local actualString = _exositeAgent.getDeviceFromURL(inputString);
+        this.assertEqual(expectedString, actualString);
+    }
+
+    function provision_test() {
+        return Promise(function(resolve, reject) {
+            _exositeAgent.provision_w_cb(function(response){
+                    if (response.statuscode == 200 || response.statuscode == 204) {
+                        resolve(response.statuscode);
+                    } else {
+                        reject(response.statuscode);
+                    }
+            }.bindenv(this));
+        }.bindenv(this));
     }
 
     function writeData(response){
-            this.info("Writing Data");
             return Promise(function(resolve, reject){
-
                 local dataIN = {};
                 dataIN["testValue"] <- 3;
-                _exositeAgent.write_data(dataIN);
+                _exositeAgent.writeData(dataIN);
             }.bindenv(this))
     }
 
-    function failTest(rejection){
-        this.info("REJECTED!!!!!!!!!1");
-        this.info("Failed test: " + rejection);
-    }
 }
