@@ -30,7 +30,7 @@ class Exosite {
      _deviceID             =  null;
      _password             =  null;
      _config_io            = "";
-     config_io_refresh_time = 10; // Change for number of seconds to wait and refresh the config_io file
+     config_io_refresh_time = 60; // Change for number of seconds to wait and refresh the config_io file
 
      // constructor
      // Returns: null
