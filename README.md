@@ -7,8 +7,8 @@ This library provides integration with [Exosite](https://exosite.com/) by wrappi
 - [x] Code
 - [ ] Unit Tests
 - [ ] General QA Tests
-- [ ] Add License
-- [ ] Add sample code
+- [x] Add License
+- [x] Add sample code
 - [ ] Code Review
 - [ ] Release to ElectricImp
 
