@@ -1,6 +1,6 @@
 // MIT License
 
-// Copyright 2018 Electric Imp
+// Copyright 2019 Exosite
 
 // SPDX-License-Identifier: MIT
 
@@ -29,14 +29,16 @@ class Exosite {
      _headers              = {};
      _deviceID             =  null;
      _password             =  null;
+     _config_io            = "";
+     config_io_refresh_time = 10; // Change for number of seconds to wait and refresh the config_io file
 
      // constructor
      // Returns: null
      // Parameters:
-     //      appId (reqired) : string - Exosite product ID
-     //      apiToken (required) : string - Token for Exosite application, used to authorize
-     //                                     all HTTP requests, must have device and devices
-     //                                     permissions.
+     //      productId (reqired) : string - The productId to send to, this is provided by Exosite/Murano/ExoSense
+     //      deviceId (required) : string - The name of the device, needs to be unique for each device within a product
+     //      password (required) : string - The associated password with the device to use after provisioning
+     //
     constructor(productId, deviceId, password) {
         _baseURL = format("https://%s.m2.exosite.io/", productId);
 
@@ -46,9 +48,8 @@ class Exosite {
     }
 
     // provision - Create a new device for the product that was passed in to the constructor
-    // Returns: 
+    // Returns:
     // Parameters:
-    //      
     //
     function provision () {
         // Create/Provision a new device in the product
@@ -63,16 +64,59 @@ class Exosite {
         }.bindenv(this))
     }
 
+    // write_data - Write a table to the "data_in" channel in the Exosite product
+    // Returns: null
+    // Parameters: 
+    //      table (reqired) : string - The table to be written to "data_in".
+    //                                 This table should conform to the config_io for the device.
+    //                                 That is, each key should match a channel identifier and the value type should match the channel's data type.
+    //
     function write_data (table) {
         local counter = 0;
 
+        server.log(http.jsonencode(table));
+
         local passwordHash = "Basic " + http.base64encode(_deviceID + ":" + _password);
         _headers["Authorization"]  <-  passwordHash;
-        server.log(http.jsonencode(table));
 
         local req = http.post(format("%sonep:v1/stack/alias", _baseURL), _headers, "data_in=" + http.jsonencode(table));
         req.sendasync(response_error_check);
     }
+
+    // fetch_config_io - Fetches the config_io from the Exosite server and writes it back. This is how the device acknowledges the config_io
+    // Returns: null
+    // Parameters: None
+    //
+    function fetch_config_io() {
+        local passwordHash = "Basic " + http.base64encode(_deviceID + ":" + _password);
+        _headers["Authorization"]  <-  passwordHash;
+        _headers["Accept"] <- "application/x-www-form-urlencoded; charset=utf-8"
+
+        server.log(_baseURL + http.jsonencode(_headers));
+        local req = http.get(format("%sonep:v1/stack/alias?config_io", _baseURL), _headers);
+        req.sendasync(fetch_config_io_cb.bindenv(this));
+
+        imp.wakeup(config_io_refresh_time, fetch_config_io.bindenv(this));
+    }
+
+    // fetch_config_io_cb - Callback for the fetch_config_io request
+    // Returns: null
+    // Parameters:
+    //             response - the response object for the http request
+    function fetch_config_io_cb(response) {
+        write_config_io(response.body);
+    }
+
+    // write_config_io - Writes a config via http post request
+    // Returns: null
+    // Parameters:
+    //            config_io : string - the config_io to post formatted as "string=<config_io_value>"
+    function write_config_io(config_io){
+        _config_io = config_io;
+        local req = http.post(format("%sonep:v1/stack/alias", _baseURL), _headers, _config_io);
+        req.sendasync(response_error_check.bindenv(this));
+    }
+
 
     function response_error_check(response) {
         // 200 - Ok           - Successful Request, returning requested values
@@ -99,4 +143,7 @@ local password   = "123456789ABCDEabcdeF";
 exosite_agent <- Exosite(product_id, device_id, password);
 exosite_agent.provision();
 
+exosite_agent.fetch_config_io();
+
 device.on("reading.sent", exosite_agent.write_data.bindenv(exosite_agent));
+
