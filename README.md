@@ -33,3 +33,31 @@ Enable configuration via 'config_io'
 - [ ] Long Polling
 - [ ] Record
 
+## General Usage
+On the device
+```
+data.var1 <- get_var1();
+data.var1 <- get_var2();
+
+agent.send(“reading.sent”, data);
+```
+
+In the agent
+```
+Require “Exosite.agent.lib.nut.1.0.0”
+
+local product_id = <my_product_id>;
+local device_id = <my_device_id>;
+local password = <my password>;
+
+exosite_agent <- Exosite(product_id, device_id, password);
+exosite_agent.provision();
+
+device.on(“reading.sent”, exosite_agent.write_data.bindenv(exosite_agent));
+```
+
+## Variable Settings
+debug\_mode \
+config\_io\_refresh\_time \
+
+## Available Functions
