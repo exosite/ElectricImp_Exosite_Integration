@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright 2015-2017 Electric Imp
+// Copyright 2019 Exosite
 //
 // SPDX-License-Identifier: MIT
 //
@@ -25,7 +25,7 @@
 class MuranoTestCase extends ImpTestCase {
     product_id = "c449gfcd11ky00000";
     device_id = "feed123";
-    password = "2123456789jABCDEabcde";
+    password = "123456789ABCDEabcdeF";
     _token = null;
     _exosite_app = null;
     _test_result = true;
@@ -36,8 +36,7 @@ class MuranoTestCase extends ImpTestCase {
 
     function test01_createDevice_and_writeData() {
         this.info("Starting test");
-         //_exosite_app.provision().then(write_data.bindenv(this), fail_test.bindenv(this));
-         //write_data(null);
+         _exosite_app.provision().then(write_data.bindenv(this), fail_test.bindenv(this));
     }
 
     function write_data(response){
@@ -48,6 +47,10 @@ class MuranoTestCase extends ImpTestCase {
                 data_in["testValue"] <- 3;
                 _exosite_app.write_data(data_in);
             }.bindenv(this))
+    }
+
+    function test02_fetch_config_io() {
+        //_exosite_app.fetch_config_io();
     }
 
     function fail_test(rejection){
