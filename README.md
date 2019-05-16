@@ -72,12 +72,34 @@ exosite_agent.config_io_refresh_time = 10;
 ```
 
 ## Available Functions
-### Constructor
-**Parameters** \
-product_id \
-device_id \
-password 
+### Constructor Exosite(*productId, deviceId, password*) ###
+| Parameter | Type | Required | Description |
+| -- | -- | -- | -- |
+| productId | string | yes | The Exosite product ID, this can be found in Exosite's Murano.
+| deviceId | string |  yes | The name/ID of the device, this needs to be unique for each device within a product.
+| password | string | yes | The associated password with the device.
 
+**Returns** \
+Nothing
 
-### Provision
-### Write Data
+**Example**
+```
+local product_id = "<Murano Product ID>";
+local device_id = "my_device_0001";
+local password = "123456789ABCabcXYZxyz"";
+
+exosite_agent <- Exosite(product_id, device_id, password);
+```
+
+### provision() ###
+Provisions the device with Exosite's Murano platform using the information provided in the constructor.
+
+### write\_data(table) ###
+| Parameter | Type | Required | Description |
+| -- | -- | -- | -- |
+| table | table object | yes | Table to be written to data\_in. Each key should match a channel identifier in the config\_io |
+
+**Example Usage**
+```
+device.on("reading.sent", exosite_agent.write_data.bindenv(exosite_agent));
+```
