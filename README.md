@@ -18,7 +18,7 @@ This library provides integration with [Exosite](https://exosite.com/iot-solutio
 
 ## TODO
 - [x] Code
-- [ ] Unit Tests
+- [x] Unit Tests
 - [ ] General QA Tests
 - [x] Add License
 - [x] Add sample code
@@ -28,7 +28,7 @@ This library provides integration with [Exosite](https://exosite.com/iot-solutio
 ## What this does (Stage 1)
 Provides an API wrapper to create/provision a device in Murano \
 Provides an API wrapper for the data_in signal to Murano
-- [x] Provision (via password)
+- [x] Provision (via token auth)
 - [x] Write Data
 
 ## What this does not do (yet)
