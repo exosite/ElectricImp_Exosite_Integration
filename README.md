@@ -45,6 +45,10 @@ Enable configuration via 'config_io'
 - [ ] Record
 
 ## General Usage
+The following is general pseudo-code usage. \
+For a more complete example of usage, see Example/example.agent.nut and Example/example.device.nut
+
+
 ### On the device
 ```
 data.var1 <- getVar1();
