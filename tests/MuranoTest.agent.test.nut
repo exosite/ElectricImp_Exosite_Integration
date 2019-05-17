@@ -27,8 +27,8 @@ class MuranoTestCase extends ImpTestCase {
     _exositeAgent = null;
 
     function setUp() {
+        clear_token();
         _exositeAgent = Exosite(productId, null);
-        _exositeAgent.provision();
 
         //Enable debugMode that was defaulted to false
         _exositeAgent.debugMode = true;
@@ -36,9 +36,20 @@ class MuranoTestCase extends ImpTestCase {
         _exositeAgent.configIORefreshTime = 5;
     }
 
-    //function test01_createDevice() {
-    //    return provision_test();
-    //}
+    function clear_token(){
+        server.log("Clearing token from server table");
+        local persist = server.load(); 
+        if (persist.rawin("exosite_token")) {
+            persist.rawdelete("exosite_token"); 
+        }
+        local result = server.save(persist);
+        server.log("Result of save: " + result);
+    }
+
+    function test01_createDevice() {
+        this.assertTrue(!_exositeAgent.tokenValid());
+        return provision_test();
+    }
 
     function test02_autoDeviceID() {
         local inputString = "https://agent.electricimp.com/fyofyVhlsf7C";
