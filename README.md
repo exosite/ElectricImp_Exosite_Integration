@@ -76,8 +76,7 @@ exositeAgent.configIORefreshTime = 10;
 | Parameter | Type | Required | Description |
 | -- | -- | -- | -- |
 | productId | string | yes | The Exosite product ID, this can be found in Exosite's Murano.
-| deviceId | string |  yes | The name/ID of the device, this needs to be unique for each device within a product.
-| password | string | yes | The associated password with the device.
+| deviceId | string |  no | The name/ID of the device, this needs to be unique for each device within a product.
 
 **Returns** \
 Nothing
@@ -99,7 +98,7 @@ Provisions the device with Exosite's Murano platform using the information provi
 | -- | -- | -- | -- |
 | table | table object | yes | Table to be written to data\_in. Each key should match a channel identifier in the config\_io |
 
-For more information on data_in and config_io, checkout the [ExoSense Documentation](https://exosense.readme.io/docs/channel-configuration)
+For more information on data_in and config_io, checkout the [ExoSense Documentation on Channel Configuration](https://exosense.readme.io/docs/channel-configuration)
 
 **Example Usage**
 ```
