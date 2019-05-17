@@ -1,5 +1,5 @@
 # Exosite (WORK IN PROGRESS REPOSITORY)
-This library provides integration with [Exosite](https://exosite.com/) by wrapping the [Exosite HTTPS Device API](http://docs.exosite.com/reference/products/device-api/http/).
+This library provides integration with [Exosite](https://exosite.com/iot-solutions/condition-monitoring/) by wrapping the [Exosite HTTPS Device API](http://docs.exosite.com/reference/products/device-api/http/).
 
 **To use this library, add** `#require "Exosite.agent.lib.nut:1.0.0"` **to the top of your agent code.**
 
