@@ -30,10 +30,10 @@ Provides an API wrapper to create/provision a device in Murano \
 Provides an API wrapper for the data_in signal to Murano
 - [x] Provision (via token auth)
 - [x] Write Data
+- [x] Acknowledge config_io write from Murano
 
 ## What this does not do (yet)
-Handle 'data_out' from Murano \
-Enable configuration via 'config_io'
+Handle 'data_out' from Murano
 - [ ] Timestamp
 - [ ] Read Data
 - [ ] Reprovision
