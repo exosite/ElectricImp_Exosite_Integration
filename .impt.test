@@ -7,5 +7,6 @@
   "testFiles": [
     "tests/MuranoTest.agent.test.nut"
   ],
-  "agentFile": "Exosite.agent.lib.nut"
+  "agentFile": "Exosite.agent.lib.nut",
+  "deviceFile": "Example/example.device.nut"
 }

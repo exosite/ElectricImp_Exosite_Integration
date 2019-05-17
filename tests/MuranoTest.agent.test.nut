@@ -33,7 +33,7 @@ const PRODUCT_ID = "c449gfcd11ky00000";
 class MuranoTestCase extends ImpTestCase {
 
     _exositeAgent = null;
-    _actually_test = false; // I can't get the agent code to load directly, need to run the test command, but sometimes I don't want this test code to run...
+    _actually_test = true; // I can't get the agent code to load directly, need to run the test command, but sometimes I don't want this test code to run...
 
     function setUp() {
         if (!_actually_test) return;
@@ -91,11 +91,9 @@ class MuranoTestCase extends ImpTestCase {
 
     function writeDataTest(){
         return Promise(function(resolve, reject) {
-            this.info("in promise");
             local test_data = {};
             test_data.temp <- 1;
             test_data.press <- 2;
-            this.info("CreatedTestData");
             //Write the data
             _exositeAgent.writeData_w_cb(test_data, function(response){
                 //Read the data back
