@@ -251,14 +251,34 @@ class Exosite {
 
 }
 
+//*********************************************************
+// Local Run of Agent Code
+// Uncommnent the following code to test the agent locally (not released to electricImp)
+// Limitations of ElectricImp require this all to be in the same file.
+//*********************************************************
+//BEGIN LOCAL AGENT CODE
+    const PRODUCT_ID = "c449gfcd11ky00000";
+
+    exositeAgent <- Exosite(PRODUCT_ID, null);
+    exositeAgent.provision();
+
+    //Enable debugMode that was defaulted to false
+    exositeAgent.debugMode = true;
+    //Change number of seconds between config_io refreshes that was defaulted to 60 seconds
+    exositeAgent.configIORefreshTime = 15;
+
+    device.on("reading.sent", exositeAgent.writeData.bindenv(exositeAgent));
+//END LOCAL AGENT CODE
+
+//*********************************************************
 // Testing workaround
 // Uncomment the following block of code for tests to pass
 // Must be commented for relase
-
+//************************************************************
 //BEGIN TEST WORKAROUND
-function noop(data) {
-    //Do nothing
-}
-
-device.on("reading.sent", noop);
+    //function noop(data) {
+    //    //Do nothing
+    //}
+    //
+    //device.on("reading.sent", noop);
 //END TEST WORKAROUND
