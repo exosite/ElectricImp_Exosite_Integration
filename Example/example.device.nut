@@ -22,6 +22,9 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
+// example.device.nu
+// This is example code for the device intended to be used with the impExplorer Development Kit
+
 #require "HTS221.device.lib.nut:2.0.1"
 #require "LPS22HB.device.lib.nut:2.0.0"
 #require "WS2812.class.nut:3.0.0"

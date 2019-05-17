@@ -22,17 +22,39 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
+//*****************************************************************
+//   TO RUN THIS TEST
+//*****************************************************************
+// 1.) Change PRODUCT_ID to the product id of the testing area in Murano
+// 2.) Ensure the current device being tested is not provisioned
+// 3.) From the repository root run `impt test run` (see tests/README.md for more detail)
+
 class MuranoTestCase extends ImpTestCase {
-    productId = "c449gfcd11ky00000";
-    deviceId = "feed123";
-    password = "123456789ABCDEabcdeF";
+    const PRODUCT_ID = "c449gfcd11ky00000";
     _exositeAgent = null;
 
     function setUp() {
-        _exositeAgent = Exosite(productId, null/*deviceId*/, password);
+        clear_token();
+        _exositeAgent = Exosite(PRODUCT_ID, null);
+
+        //Enable debugMode that was defaulted to false
+        _exositeAgent.debugMode = true;
+        //Change number of seconds between config_io refreshes that was defaulted to 60 seconds
+        _exositeAgent.configIORefreshTime = 5;
+    }
+
+    function clear_token(){
+        server.log("Clearing token from server table");
+        local persist = server.load(); 
+        if (persist.rawin("exosite_token")) {
+            persist.rawdelete("exosite_token"); 
+        }
+        local result = server.save(persist);
+        server.log("Result of save: " + result);
     }
 
     function test01_createDevice() {
+        this.assertTrue(!_exositeAgent.tokenValid());
         return provision_test();
     }
 
@@ -44,10 +66,15 @@ class MuranoTestCase extends ImpTestCase {
         this.assertEqual(expectedString, actualString);
     }
 
+    function test03_writeData(){
+        return writeDataTest();
+    }
+
     function provision_test() {
         return Promise(function(resolve, reject) {
             _exositeAgent.provision_w_cb(function(response){
                     if (response.statuscode == 200 || response.statuscode == 204) {
+                        _exositeAgent.setToken(response);
                         resolve(response.statuscode);
                     } else {
                         reject(response.statuscode);
@@ -56,12 +83,28 @@ class MuranoTestCase extends ImpTestCase {
         }.bindenv(this));
     }
 
-    function writeData(response){
-            return Promise(function(resolve, reject){
-                local dataIN = {};
-                dataIN["testValue"] <- 3;
-                _exositeAgent.writeData(dataIN);
-            }.bindenv(this))
+    function writeDataTest(){
+        return Promise(function(resolve, reject) {
+            this.info("in promise");
+            local test_data = {};
+            test_data.temp <- 1;
+            test_data.press <- 2;
+            this.info("CreatedTestData");
+            //Write the data
+            _exositeAgent.writeData_w_cb(test_data, function(response){
+                //Read the data back
+                readAttribute("data_in", function(response){
+                    //Check it's the same
+                    local expected_result = "data_in=%7b+%22press%22%3a+2%2c+%22temp%22%3a+1+%7d"
+                    if (response.statuscode != 200) {
+                        reject(response.statuscode);
+                    } else if (response.body != expected_result) {
+                        reject(response.body);
+                    } else {
+                        resolve(response.body);
+                    }
+                }.bindenv(this));
+            }.bindenv(this));
+        }.bindenv(this));
     }
-
 }

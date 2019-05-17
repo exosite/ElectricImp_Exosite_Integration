@@ -27,7 +27,7 @@ class Exosite {
 
      //Public settings variables
      //set to true to log debug message on the ElectricImp server
-     debugMode             = false;
+     debugMode             = true;
      //Number of seconds to wait between config_io refreshes. 
      configIORefreshTime   = 60; 
 
@@ -35,34 +35,30 @@ class Exosite {
      _baseURL              = null;
      _headers              = {};
      _deviceId             =  null;
-     _password             =  null;
      _configIO             =  "";
+     _token                = null;
 
      // constructor
      // Returns: null
      // Parameters:
      //      productId (reqired) : string - The productId to send to, this is provided by Exosite/Murano/ExoSense
      //      deviceId (required) : string - The name of the device, needs to be unique for each device within a product
-     //      password (required) : string - The associated password with the device to use after provisioning
      //
-    constructor(productId, deviceId, password) {
+    constructor(productId, deviceId) {
         _baseURL = format("https://%s.m2.exosite.io/", productId);
+        _deviceId = (deviceId == null) ? getDeviceFromURL(http.agenturl()) : deviceId;
 
-        deviceId = (deviceId == null) ? getDeviceFromURL(http.agenturl()) : deviceId;
-
-        local passwordHash = "Basic " + http.base64encode(deviceId + ":" + password);
         _headers["Content-Type"] <- "application/x-www-form-urlencoded; charset=utf-8";
         _headers["Accept"] <- "application/x-www-form-urlencoded; charset=utf-8";
-        _headers["Authorization"]  <-  passwordHash;
-
-        _deviceId = deviceId;
-        _password = password;
 
         //Start polling for config_io
         fetchConfigIO();
     }
 
     //Private Helper function to get unique ID from each device
+    // Returns: ElectricImps AgentID (Unique per device)
+    // Parameters:
+    //         urlString: string - The agent's URL. This can be retrieved via http.agenturl()
     function getDeviceFromURL(urlString) {
         local splitArray = split(urlString, "/");
         local lastEntry = splitArray.top();
@@ -70,6 +66,9 @@ class Exosite {
     }
 
     // debug - prints out to server.log if the debug flag is true
+    // Returns: None
+    // Parameters:
+    //           logVal: string - The value to log to server if debugMode flag is set.
     function debug(logVal) {
         if (debugMode) {
             server.log(logVal);
@@ -77,56 +76,101 @@ class Exosite {
     }
 
     // provision - Create a new device for the product that was passed in to the constructor
-    // Returns:
-    // Parameters:
+    // Returns: None
+    // Parameters: None
     //
     function provision() {
-                local activate_url = format("%sprovision/activate", _baseURL);
-                local data = format("id=%s&password=%s", _deviceId, _password);
-                local req = http.post(activate_url, _headers, data);
-               req.sendasync(responseErrorCheck.bindenv(this));
+        provision_w_cb(setToken.bindenv(this));
     }
 
+    // Private Function - provisions a device with a custom callback
+    // this is here to assist in testing, otherwise we would just have the provision() function
     function provision_w_cb(callBack){
-                local activate_url = format("%sprovision/activate", _baseURL);
-                local data = format("id=%s&password=%s", _deviceId, _password);
-                local req = http.post(activate_url, _headers, data);
-                req.sendasync(callBack);
+        if (tokenValid()) {
+           server.log("Attempting to provision when there is already a token, aborting provision");
+           return;
+        }
+        debug("Provisioning");
+        debug("DEBUG_MESSAGE");
+        debug("headers: " + http.jsonencode(_headers));
+        local activate_url = format("%sprovision/activate", _baseURL);
+        local data = format("id=%s", _deviceId);
+        local req = http.post(activate_url, _headers, data);
+        req.sendasync(callBack);
     }
+
+    //Private Function
+    // setToken - Takes the response from a provision request and sets the token locally
+    //            Saves the token to non-volatile memory in "exosite_token"
+    // Returns: None
+    // Parameters:
+    //           response: object - http response object from provision request
+    //
+    function setToken(response) {
+        server.log(response.body);
+        if (response.statuscode == 200) {
+            server.log("Setting TOKEN: " + response.body);
+            _token = response.body;
+            if (_token != null) _headers["X-Exosite-CIK"]  <-  _token;
+            local settings = server.load();
+            settings.exosite_token <- _token;
+            local result = server.save(settings);
+            if (result != 0) server.error("Could not save settings!");
+        } else if (response.statuscode == 409) {
+            server.log("Response error, may be trying to provision an already provisioned device");
+        } else {
+            server.log("Token not recieved. Error: " + response.statuscode);
+        }
+    }
+
 
     // writeData - Write a table to the "data_in" channel in the Exosite product
     // Returns: null
     // Parameters: 
-    //      table (reqired) : string - The table to be written to "data_in".
+    //      table (required) : string - The table to be written to "data_in".
     //                                 This table should conform to the config_io for the device.
     //                                 That is, each key should match a channel identifier and the value type should match the channel's data type.
     //
+    // This is anticipated to be the function to call for device.on("reading.sent", <pointer_to_this_function>);
     function writeData(table) {
-        debug("writeData: " + http.jsonencode(table));
+        writeData_w_cb(table, responseErrorCheck.bindenv(this));
+    }
+
+    function writeData_w_cb(table, callBack){
+        if (!tokenValid()) return;
+
+        server.log("writeData: " + http.jsonencode(table));
         debug("headers: " + http.jsonencode(_headers));
 
         local req = http.post(format("%sonep:v1/stack/alias", _baseURL), _headers, "data_in=" + http.jsonencode(table));
-        req.sendasync(responseErrorCheck.bindenv(this));
+        req.sendasync(callBack.bindenv(this));
     }
 
     // fetchConfigIO - Fetches the config_io from the Exosite server and writes it back. This is how the device acknowledges the config_io
     // Returns: null
     // Parameters: None
-    //
     function fetchConfigIO() {
+        if (!tokenValid()) {
+            imp.wakeup(configIORefreshTime, fetchConfigIO.bindenv(this));
+            return;
+        }
+
         debug("fetching config_io");
+        if (_token != null) _headers["X-Exosite-CIK"]  <-  _token;
         debug("headers: " + http.jsonencode(_headers));
 
         local req = http.get(format("%sonep:v1/stack/alias?config_io", _baseURL), _headers);
-        req.sendasync(fetchConfigIOCallback.bindenv(this));
+        if (_token != null) req.sendasync(fetchConfigIOCallback.bindenv(this));
 
         imp.wakeup(configIORefreshTime, fetchConfigIO.bindenv(this));
     }
 
-    // fetchConfigIO - Callback for the fetchConfigIO request
+    // fetchConfigIOCallback - Callback for the fetchConfigIO request
     // Returns: null
     // Parameters:
     //             response - the response object for the http request
+    //
+    // This is split from having writeConfigIO be the callback directly so that a user can write their own string via writeConfigIO.
     function fetchConfigIOCallback(response) {
         writeConfigIO(response.body);
     }
@@ -135,13 +179,31 @@ class Exosite {
     // Returns: null
     // Parameters:
     //            config_io : string - the config_io to post formatted as "string=<config_io_value>"
+    //
+    // The config_io is the 'contract' between the device and ExoSense of how the data is going to be transmitted
+    // See https://exosense.readme.io/docs/channel-configuration for more information
     function writeConfigIO(config_io){
-        debug("writeConfigIO: " + config_io);
+        if (!tokenValid()) return;
+        server.log("writeConfigIO: " + config_io);
         debug("headers: " + http.jsonencode(_headers));
 
         _configIO = config_io;
         local req = http.post(format("%sonep:v1/stack/alias", _baseURL), _headers, _configIO);
         req.sendasync(responseErrorCheck.bindenv(this));
+    }
+
+    // readAttribute - Fetches the given attribute from the Exosite server. 
+    // Returns: null
+    // Parameters: None
+    function readAttribute(attribute, callBack) {
+        if (!tokenValid()) return;
+
+        debug("fetching attribute: " + attribute);
+        _headers["X-Exosite-CIK"]  <-  _token;
+        debug("headers: " + http.jsonencode(_headers));
+
+        local req = http.get(format("%sonep:v1/stack/alias?%s", _baseURL, attribute), _headers);
+        req.sendasync(callBack.bindenv(this));
     }
 
     // responseErrorCheck - Checks the status code of an http response and prints to the server log
@@ -162,19 +224,50 @@ class Exosite {
 
         return response.statuscode;
     }
+
+    // Private Function
+    // tokenValid - Checks for a token in the _token variable, 
+    //              if it's not there, attempts to revtrieve it from non-volatile memory, 
+    //              if it's still not there, returns false
+    //
+    //  Returns: true if _token is populated.
+    //           false if no _token found.
+    //
+    function tokenValid(){
+        if (_token == null) {
+            local settings = server.load();
+            if (settings.rawin("exosite_token")) {
+                server.log("Found stored Token: " + settings.exosite_token);
+                _token = settings.exosite_token;
+                if (_token != null) _headers["X-Exosite-CIK"]  <-  _token;
+            } else {
+                server.log("No token found, maybe need to provision?");
+                //provision();
+                return false;
+            }
+        }
+        return true;
+    }
+
 }
 
-//TODO: Move to own agent (out of library)
-local productId = "c449gfcd11ky00000";
-local deviceId  = "feed123";
-local password   = "123456789ABCDEabcdeF";
+/*
+ TODO: This is not part of the library, this would be it's own agent file. It is here for testing purposes
+*/
+//local productId = "c449gfcd11ky00000";
+//
+//_exositeAgent <- Exosite(productId, null);
+//_exositeAgent.provision();
+//
+////Enable debugMode that was defaulted to false
+//_exositeAgent.debugMode = false;
+////Change number of seconds between config_io refreshes that was defaulted to 60 seconds
+//_exositeAgent.configIORefreshTime = 5;
+//
+// device.on("reading.sent", _exositeAgent.writeData.bindenv(_exositeAgent));
 
-exositeAgent <- Exosite(productId, null, password);
-exositeAgent.provision();
+function noop(data) {
+    //Do nothing
+}
 
-//Enable debugMode that was defaulted to false
-exositeAgent.debugMode = true;
-//Change number of seconds between config_io refreshes that was defaulted to 60 seconds
-exositeAgent.configIORefreshTime = 5;
-
-device.on("reading.sent", exositeAgent.writeData.bindenv(exositeAgent));
+device.on("reading.sent", noop);
