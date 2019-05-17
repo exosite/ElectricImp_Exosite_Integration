@@ -18,8 +18,6 @@ Provides an API wrapper for the data_in signal to Murano
 - [x] Provision (via password)
 - [x] Write Data
 
-
-
 ## What this does not do (yet)
 Handle 'data_out' from Murano \
 Enable configuration via 'config_io'
@@ -48,9 +46,8 @@ Require “Exosite.agent.lib.nut.1.0.0”
 
 local productId = <my_product_id>;
 local deviceId = <my_device_id>;
-local password = <my password>;
 
-exositeAgent <- Exosite(productId, deviceId, password);
+exositeAgent <- Exosite(productId, deviceId);
 exositeAgent.provision();
 
 device.on(“reading.sent”, exositeAgent.writeData.bindenv(exositeAgent));
@@ -72,7 +69,7 @@ exositeAgent.configIORefreshTime = 10;
 ```
 
 ## Available Functions
-### Constructor Exosite(*productId, deviceId, password*) ###
+### Constructor Exosite(*productId, deviceId*) ###
 | Parameter | Type | Required | Description |
 | -- | -- | -- | -- |
 | productId | string | yes | The Exosite product ID, this can be found in Exosite's Murano.
@@ -84,16 +81,17 @@ Nothing
 **Example**
 ```
 local productId = "<Murano Product ID>";
-local deviceId = "my_device_0001";
-local password = "123456789ABCabcXYZxyz"";
 
-exositeAgent <- Exosite(productId, deviceId, password);
+exositeAgent <- Exosite(productId, null);
 ```
 
 ### provision() ###
 Provisions the device with Exosite's Murano platform using the information provided in the constructor.
 
-### writeData(table) ###
+**Returns** \
+Nothing
+
+### writeData(*table*) ###
 | Parameter | Type | Required | Description |
 | -- | -- | -- | -- |
 | table | table object | yes | Table to be written to data\_in. Each key should match a channel identifier in the config\_io |
