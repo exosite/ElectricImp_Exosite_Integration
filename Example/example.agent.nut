@@ -25,10 +25,8 @@
 #require "Exosite.agent.lib.nut:1.0.0"
 
 local productId = "c449gfcd11ky00000";
-local deviceId  = "feed123";
-local password  = "123456789ABCDEabcdeF";
 
-exositeAgent <- Exosite(productId, deviceId, password);
+exositeAgent <- Exosite(productId, null);
 exositeAgent.provision();
 
 //Enable debugMode that was defaulted to false

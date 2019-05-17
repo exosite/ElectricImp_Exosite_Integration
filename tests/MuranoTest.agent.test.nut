@@ -29,39 +29,46 @@ class MuranoTestCase extends ImpTestCase {
     _exositeAgent = null;
 
     function setUp() {
-        _exositeAgent = Exosite(productId, null/*deviceId*/, password);
+        //_exositeAgent <- Exosite(productId, null, password);
+        //_exositeAgent.provision();
+
+        //Enable debugMode that was defaulted to false
+        //_exositeAgent.debugMode = true;
+        //Change number of seconds between config_io refreshes that was defaulted to 60 seconds
+        //_exositeAgent.configIORefreshTime = 5;
+
+        //device.on("reading.sent", _exositeAgent.writeData.bindenv(_exositeAgent));
     }
 
-    function test01_createDevice() {
-        return provision_test();
-    }
-
-    function test02_autoDeviceID() {
-        local inputString = "https://agent.electricimp.com/fyofyVhlsf7C";
-        local expectedString =  "fyofyVhlsf7C";
-
-        local actualString = _exositeAgent.getDeviceFromURL(inputString);
-        this.assertEqual(expectedString, actualString);
-    }
-
-    function provision_test() {
-        return Promise(function(resolve, reject) {
-            _exositeAgent.provision_w_cb(function(response){
-                    if (response.statuscode == 200 || response.statuscode == 204) {
-                        resolve(response.statuscode);
-                    } else {
-                        reject(response.statuscode);
-                    }
-            }.bindenv(this));
-        }.bindenv(this));
-    }
-
-    function writeData(response){
-            return Promise(function(resolve, reject){
-                local dataIN = {};
-                dataIN["testValue"] <- 3;
-                _exositeAgent.writeData(dataIN);
-            }.bindenv(this))
-    }
-
+//    function test01_createDevice() {
+//        return provision_test();
+//    }
+//
+//    function test02_autoDeviceID() {
+//        local inputString = "https://agent.electricimp.com/fyofyVhlsf7C";
+//        local expectedString =  "fyofyVhlsf7C";
+//
+//        local actualString = _exositeAgent.getDeviceFromURL(inputString);
+//        this.assertEqual(expectedString, actualString);
+//    }
+//
+//    function provision_test() {
+//        return Promise(function(resolve, reject) {
+//            _exositeAgent.provision_w_cb(function(response){
+//                    if (response.statuscode == 200 || response.statuscode == 204) {
+//                        resolve(response.statuscode);
+//                    } else {
+//                        reject(response.statuscode);
+//                    }
+//            }.bindenv(this));
+//        }.bindenv(this));
+//    }
+//
+//    function writeData(response){
+//            return Promise(function(resolve, reject){
+//                local dataIN = {};
+//                dataIN["testValue"] <- 3;
+//                _exositeAgent.writeData(dataIN);
+//            }.bindenv(this))
+//    }
 }
