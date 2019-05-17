@@ -91,6 +91,7 @@ exositeAgent.configIORefreshTime = 10;
 | productId | string | yes | The Exosite product ID, this can be found in Exosite's Murano.
 | deviceId | string |  no | The name/ID of the device, this needs to be unique for each device within a product.
 
+
 **Returns** \
 Nothing
 
