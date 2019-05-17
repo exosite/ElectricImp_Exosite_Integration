@@ -76,7 +76,7 @@ exositeAgent.configIORefreshTime = 10;
 | Parameter | Type | Required | Description |
 | -- | -- | -- | -- |
 | productId | string | yes | The Exosite product ID, this can be found in Exosite's Murano.
-| deviceId | string |  yes | The name/ID of the device, this needs to be unique for each device within a product.
+| deviceId | string |  no | The name/ID of the device, this needs to be unique for each device within a product. If null, the ElectricImp AgentID is used.
 | password | string | yes | The associated password with the device.
 
 **Returns** \
