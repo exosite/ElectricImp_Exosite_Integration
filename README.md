@@ -3,6 +3,21 @@ This library provides integration with [Exosite](https://exosite.com/) by wrappi
 
 **To use this library, add** `#require "Exosite.agent.lib.nut:1.0.0"` **to the top of your agent code.**
 
+   * [Exosite (WORK IN PROGRESS REPOSITORY)](#exosite-work-in-progress-repository)
+      * [TODO](#todo)
+      * [What this does (Stage 1)](#what-this-does-stage-1)
+      * [What this does not do (yet)](#what-this-does-not-do-yet)
+      * [General Usage](#general-usage)
+         * [On the device](#on-the-device)
+         * [In the agent](#in-the-agent)
+      * [Variable Settings](#variable-settings)
+         * [debugMode](#debugmode)
+         * [configIORefreshTime](#configiorefreshtime)
+      * [Available Functions](#available-functions)
+         * [Constructor Exosite(<em>productId, deviceId</em>)](#constructor-exositeproductid-deviceid)
+         * [provision()](#provision)
+         * [writeData(<em>table</em>)](#writedatatable)
+
 ## TODO
 - [x] Code
 - [ ] Unit Tests
