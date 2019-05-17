@@ -27,7 +27,7 @@ class Exosite {
 
      //Public settings variables
      //set to true to log debug message on the ElectricImp server
-     debugMode             = true;
+     debugMode             = false;
      //Number of seconds to wait between config_io refreshes. 
      configIORefreshTime   = 60; 
 
@@ -39,7 +39,7 @@ class Exosite {
      _token                = null;
 
      // constructor
-     // Returns: null
+     // Returns: Nothing
      // Parameters:
      //      productId (reqired) : string - The productId to send to, this is provided by Exosite/Murano/ExoSense
      //      deviceId (required) : string - The name of the device, needs to be unique for each device within a product
@@ -66,7 +66,7 @@ class Exosite {
     }
 
     // debug - prints out to server.log if the debug flag is true
-    // Returns: None
+    // Returns: Nothing
     // Parameters:
     //           logVal: string - The value to log to server if debugMode flag is set.
     function debug(logVal) {
@@ -76,7 +76,7 @@ class Exosite {
     }
 
     // provision - Create a new device for the product that was passed in to the constructor
-    // Returns: None
+    // Returns: Nothing
     // Parameters: None
     //
     function provision() {
@@ -102,7 +102,7 @@ class Exosite {
     //Private Function
     // setToken - Takes the response from a provision request and sets the token locally
     //            Saves the token to non-volatile memory in "exosite_token"
-    // Returns: None
+    // Returns: Nothing
     // Parameters:
     //           response: object - http response object from provision request
     //
@@ -125,7 +125,7 @@ class Exosite {
 
 
     // writeData - Write a table to the "data_in" channel in the Exosite product
-    // Returns: null
+    // Returns: Nothing
     // Parameters: 
     //      table (required) : string - The table to be written to "data_in".
     //                                 This table should conform to the config_io for the device.
@@ -136,6 +136,14 @@ class Exosite {
         writeData_w_cb(table, responseErrorCheck.bindenv(this));
     }
 
+    //Private Function
+    // this is here to assist in testing, otherwise we would just have the writeData() function
+    // Returns: Nothing
+    // Parameters: 
+    //      table (required) : string - The table to be written to "data_in".
+    //                                 This table should conform to the config_io for the device.
+    //                                 That is, each key should match a channel identifier and the value type should match the channel's data type.
+    //      callBack (required) : function - callBack function for the http write request
     function writeData_w_cb(table, callBack){
         if (!tokenValid()) return;
 
@@ -147,7 +155,7 @@ class Exosite {
     }
 
     // fetchConfigIO - Fetches the config_io from the Exosite server and writes it back. This is how the device acknowledges the config_io
-    // Returns: null
+    // Returns: Nothing
     // Parameters: None
     function fetchConfigIO() {
         if (!tokenValid()) {
