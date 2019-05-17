@@ -251,23 +251,14 @@ class Exosite {
 
 }
 
-/*
- TODO: This is not part of the library, this would be it's own agent file. It is here for testing purposes
-*/
-//local productId = "c449gfcd11ky00000";
-//
-//_exositeAgent <- Exosite(productId, null);
-//_exositeAgent.provision();
-//
-////Enable debugMode that was defaulted to false
-//_exositeAgent.debugMode = false;
-////Change number of seconds between config_io refreshes that was defaulted to 60 seconds
-//_exositeAgent.configIORefreshTime = 5;
-//
-// device.on("reading.sent", _exositeAgent.writeData.bindenv(_exositeAgent));
+// Testing workaround
+// Uncomment the following block of code for tests to pass
+// Must be commented for relase
 
+//BEGIN TEST WORKAROUND
 function noop(data) {
     //Do nothing
 }
 
 device.on("reading.sent", noop);
+//END TEST WORKAROUND
