@@ -99,6 +99,8 @@ Provisions the device with Exosite's Murano platform using the information provi
 | -- | -- | -- | -- |
 | table | table object | yes | Table to be written to data\_in. Each key should match a channel identifier in the config\_io |
 
+For more information on data_in and config_io, checkout the [ExoSense Documentation](https://exosense.readme.io/docs/channel-configuration)
+
 **Example Usage**
 ```
 device.on("reading.sent", exositeAgent.writeData.bindenv(exositeAgent));
