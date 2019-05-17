@@ -3,7 +3,7 @@ This library provides integration with [Exosite](https://exosite.com/iot-solutio
 
 **To use this library, add** `#require "Exosite.agent.lib.nut:1.0.0"` **to the top of your agent code.**
 
-  * [What this does (Stage 1)](#what-this-does-stage-1)
+  * [What this does](#what-this-does)
   * [What this does not do (yet)](#what-this-does-not-do-yet)
   * [General Usage](#general-usage)
      * [On the device](#on-the-device)
@@ -25,7 +25,7 @@ This library provides integration with [Exosite](https://exosite.com/iot-solutio
 - [ ] Code Review
 - [ ] Release to ElectricImp
 
-## What this does (Stage 1)
+## What this does
 Provides an API wrapper to create/provision a device in Murano \
 Provides an API wrapper for the data_in signal to Murano
 - [x] Provision (via token auth)
