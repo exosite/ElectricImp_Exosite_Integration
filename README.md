@@ -79,7 +79,7 @@ The debug mode is off (false) by default, and can be enabled by setting `debugMo
 exositeAgent.debugMode = true;
 ```
 ### configIORefreshTime
-The agent periodically checks the config_io set on the server. The length of time between checks can be set with the configIORefreshTime variable. By default, the agent waits 60 seconds before refreshing the config_io.
+The agent periodically checks the config_io set on the server. The length of time between checks can be set with the `configIORefreshTime` variable. By default, the agent waits 60 seconds before refreshing the config_io.
 ```
 exositeAgent.configIORefreshTime = 10;
 ```
