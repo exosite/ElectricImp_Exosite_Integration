@@ -27,7 +27,7 @@ class Exosite {
 
      //Public settings variables
      //set to true to log debug message on the ElectricImp server
-     debugMode             = false;
+     debugMode             = true;
      //Number of seconds to wait between config_io refreshes. 
      configIORefreshTime   = 60; 
 
@@ -133,13 +133,17 @@ class Exosite {
     //
     // This is anticipated to be the function to call for device.on("reading.sent", <pointer_to_this_function>);
     function writeData(table) {
+        writeData_w_cb(table, responseErrorCheck.bindenv(this));
+    }
+
+    function writeData_w_cb(table, callBack){
         if (!tokenValid()) return;
 
         server.log("writeData: " + http.jsonencode(table));
         debug("headers: " + http.jsonencode(_headers));
 
         local req = http.post(format("%sonep:v1/stack/alias", _baseURL), _headers, "data_in=" + http.jsonencode(table));
-        req.sendasync(responseErrorCheck.bindenv(this));
+        req.sendasync(callBack.bindenv(this));
     }
 
     // fetchConfigIO - Fetches the config_io from the Exosite server and writes it back. This is how the device acknowledges the config_io
@@ -186,6 +190,20 @@ class Exosite {
         _configIO = config_io;
         local req = http.post(format("%sonep:v1/stack/alias", _baseURL), _headers, _configIO);
         req.sendasync(responseErrorCheck.bindenv(this));
+    }
+
+    // readAttribute - Fetches the given attribute from the Exosite server. 
+    // Returns: null
+    // Parameters: None
+    function readAttribute(attribute, callBack) {
+        if (!tokenValid()) return;
+
+        debug("fetching attribute: " + attribute);
+        _headers["X-Exosite-CIK"]  <-  _token;
+        debug("headers: " + http.jsonencode(_headers));
+
+        local req = http.get(format("%sonep:v1/stack/alias?%s", _baseURL, attribute), _headers);
+        req.sendasync(callBack.bindenv(this));
     }
 
     // responseErrorCheck - Checks the status code of an http response and prints to the server log
