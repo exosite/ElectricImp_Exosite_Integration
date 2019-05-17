@@ -61,10 +61,9 @@ agent.send(“reading.sent”, data);
 ```
 Require “Exosite.agent.lib.nut.1.0.0”
 
-local productId = <my_product_id>;
-local deviceId = <my_device_id>;
+const PRODUCT_ID = <my_product_id>;
 
-exositeAgent <- Exosite(productId, deviceId);
+exositeAgent <- Exosite(PRODUCT_ID, null);
 exositeAgent.provision();
 
 device.on(“reading.sent”, exositeAgent.writeData.bindenv(exositeAgent));
