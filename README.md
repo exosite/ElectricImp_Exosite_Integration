@@ -52,7 +52,7 @@ For a more complete example of usage, see Example/example.agent.nut and Example/
 ### On the device
 ```
 data.var1 <- getVar1();
-data.var1 <- getVar2();
+data.var2 <- getVar2();
 
 agent.send(“reading.sent”, data);
 ```
@@ -89,7 +89,7 @@ exositeAgent.configIORefreshTime = 10;
 | Parameter | Type | Required | Description |
 | -- | -- | -- | -- |
 | productId | string | yes | The Exosite product ID, this can be found in Exosite's Murano.
-| deviceId | string |  no | The name/ID of the device, this needs to be unique for each device within a product.
+| deviceId | string |  no | The name/ID of the device, this needs to be unique for each device within a product. If a deviceID is not provided, ElectricImp's AgentID will be used.
 
 
 **Returns** \
