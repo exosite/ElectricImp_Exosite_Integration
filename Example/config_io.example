@@ -1,0 +1,73 @@
+{
+  "channels": {
+    "temp": {
+      "description": "Temp",
+      "display_name": "Temp",
+      "properties": {
+        "data_type": "TEMPERATURE",
+        "data_unit": "DEG_CELSIUS",
+        "device_diagnostic": false,
+        "max": null,
+        "min": null,
+        "precision": 3
+      },
+      "protocol_config": {
+        "app_specific_config": {},
+        "application": null,
+        "down_sample": "actual",
+        "input_raw": {},
+        "interface": null,
+        "report_on_change": false,
+        "report_rate": null,
+        "sample_rate": null,
+        "timeout": null
+      }
+    },
+    "humid": {
+      "description": "Humidity",
+      "display_name": "Humidity",
+      "properties": {
+        "data_type": "HUMIDITY",
+        "data_unit": "PERCENT",
+        "device_diagnostic": false,
+        "max": null,
+        "min": null,
+        "precision": 3
+      },
+      "protocol_config": {
+        "app_specific_config": {},
+        "application": null,
+        "down_sample": "actual",
+        "input_raw": {},
+        "interface": null,
+        "report_on_change": false,
+        "report_rate": null,
+        "sample_rate": null,
+        "timeout": null
+      }
+    },
+    "press": {
+      "description": "Pressure",
+      "display_name": "Pressure",
+      "properties": {
+        "data_type": "PRESSURE",
+        "data_unit": "MIL_BAR",
+        "device_diagnostic": false,
+        "max": null,
+        "min": null,
+        "precision": 3
+      },
+      "protocol_config": {
+        "app_specific_config": {},
+        "application": null,
+        "down_sample": "actual",
+        "input_raw": {},
+        "interface": null,
+        "report_on_change": false,
+        "report_rate": null,
+        "sample_rate": null,
+        "timeout": null
+      }
+    }
+  }
+}

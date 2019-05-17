@@ -52,7 +52,7 @@ class Exosite {
         _headers["Accept"] <- "application/x-www-form-urlencoded; charset=utf-8";
 
         //Start polling for config_io
-        fetchConfigIO();
+        pollConfigIO();
     }
 
     //Private Helper function to get unique ID from each device
@@ -107,11 +107,12 @@ class Exosite {
     //           response: object - http response object from provision request
     //
     function setToken(response) {
-        server.log(response.body);
+        debug(response.body);
         if (response.statuscode == 200) {
-            server.log("Setting TOKEN: " + response.body);
+            debug("Setting TOKEN: " + response.body);
             _token = response.body;
-            if (_token != null) _headers["X-Exosite-CIK"]  <-  _token;
+            _headers["X-Exosite-CIK"]  <-  _token;
+
             local settings = server.load();
             settings.exosite_token <- _token;
             local result = server.save(settings);
@@ -154,32 +155,32 @@ class Exosite {
         req.sendasync(callBack.bindenv(this));
     }
 
-    // fetchConfigIO - Fetches the config_io from the Exosite server and writes it back. This is how the device acknowledges the config_io
+    // pollConfigIO - Fetches the config_io from the Exosite server and writes it back. This is how the device acknowledges the config_io
     // Returns: Nothing
     // Parameters: None
-    function fetchConfigIO() {
+    function pollConfigIO() {
         if (!tokenValid()) {
-            imp.wakeup(configIORefreshTime, fetchConfigIO.bindenv(this));
+            imp.wakeup(configIORefreshTime, pollConfigIO.bindenv(this));
             return;
         }
 
         debug("fetching config_io");
-        if (_token != null) _headers["X-Exosite-CIK"]  <-  _token;
+        _headers["X-Exosite-CIK"]  <-  _token;
         debug("headers: " + http.jsonencode(_headers));
 
         local req = http.get(format("%sonep:v1/stack/alias?config_io", _baseURL), _headers);
-        if (_token != null) req.sendasync(fetchConfigIOCallback.bindenv(this));
+        if (_token != null) req.sendasync(pollConfigIOCallback.bindenv(this));
 
-        imp.wakeup(configIORefreshTime, fetchConfigIO.bindenv(this));
+        imp.wakeup(configIORefreshTime, pollConfigIO.bindenv(this));
     }
 
-    // fetchConfigIOCallback - Callback for the fetchConfigIO request
+    // pollConfigIOCallback - Callback for the pollConfigIO request
     // Returns: null
     // Parameters:
     //             response - the response object for the http request
     //
     // This is split from having writeConfigIO be the callback directly so that a user can write their own string via writeConfigIO.
-    function fetchConfigIOCallback(response) {
+    function pollConfigIOCallback(response) {
         writeConfigIO(response.body);
     }
 
@@ -206,8 +207,8 @@ class Exosite {
     function readAttribute(attribute, callBack) {
         if (!tokenValid()) return;
 
-        debug("fetching attribute: " + attribute);
         _headers["X-Exosite-CIK"]  <-  _token;
+        debug("fetching attribute: " + attribute);
         debug("headers: " + http.jsonencode(_headers));
 
         local req = http.get(format("%sonep:v1/stack/alias?%s", _baseURL, attribute), _headers);
@@ -247,7 +248,7 @@ class Exosite {
             if (settings.rawin("exosite_token")) {
                 server.log("Found stored Token: " + settings.exosite_token);
                 _token = settings.exosite_token;
-                if (_token != null) _headers["X-Exosite-CIK"]  <-  _token;
+                _headers["X-Exosite-CIK"]  <-  _token;
             } else {
                 server.log("No token found, maybe need to provision?");
                 //provision();
