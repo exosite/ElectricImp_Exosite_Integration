@@ -41,7 +41,7 @@ class Exosite {
      // constructor
      // Returns: Nothing
      // Parameters:
-     //      productId (reqired) : string - The productId to send to, this is provided by Exosite/Murano/ExoSense
+     //      productId (reqired) : string - The ExoSense productId to send to
      //      deviceId (required) : string - The name of the device, needs to be unique for each device within a product
      //
     constructor(productId, deviceId) {
@@ -251,7 +251,6 @@ class Exosite {
                 _headers["X-Exosite-CIK"]  <-  _token;
             } else {
                 server.log("No token found, maybe need to provision?");
-                //provision();
                 return false;
             }
         }

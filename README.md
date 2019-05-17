@@ -26,14 +26,14 @@ This library provides integration with [Exosite](https://exosite.com/iot-solutio
 - [ ] Release to ElectricImp
 
 ## What this does
-Provides an API wrapper to create/provision a device in Murano \
-Provides an API wrapper for the data_in signal to Murano
+Provides an API wrapper to create/provision a device\
+Provides an API wrapper for the data_in signal
 - [x] Provision (via token auth)
 - [x] Write Data
-- [x] Acknowledge config_io write from Murano
+- [x] Acknowledge config_io write
 
 ## What this does not do (yet)
-Handle 'data_out' from Murano
+Handle 'data_out'
 - [ ] Timestamp
 - [ ] Read Data
 - [ ] Reprovision
@@ -97,13 +97,13 @@ Nothing
 
 **Example**
 ```
-local productId = "<Murano Product ID>";
+local productId = "<Product ID>";
 
 exositeAgent <- Exosite(productId, null);
 ```
 
 ### provision() ###
-Provisions the device with Exosite's Murano platform using the information provided in the constructor.
+Provisions the device with ExoSense using the information provided in the constructor.
 
 **Returns** \
 Nothing
