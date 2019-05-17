@@ -22,11 +22,14 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
+//example.agent.nut
+// This example code recieves a data table from the device and posts to Murano on the "data_in" channel
+
 #require "Exosite.agent.lib.nut:1.0.0"
 
-local productId = "c449gfcd11ky00000";
+const PRODUCT_ID = <my_murano_product_id>;
 
-exositeAgent <- Exosite(productId, null);
+exositeAgent <- Exosite(PRODUCT_ID, null);
 exositeAgent.provision();
 
 //Enable debugMode that was defaulted to false
