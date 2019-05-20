@@ -27,7 +27,7 @@ class Exosite {
 
      //Public settings variables
      //set to true to log debug message on the ElectricImp server
-     debugMode             = false;
+     debugMode             = true;
      //Number of seconds to wait between config_io refreshes. 
      configIORefreshTime   = 60; 
 
@@ -36,6 +36,7 @@ class Exosite {
      _headers              = {};
      _deviceId             =  null;
      _configIO             =  "";
+     _configIOModificationTime = "";
      _token                = null;
 
      // constructor
@@ -164,11 +165,21 @@ class Exosite {
             return;
         }
 
-        debug("fetching config_io");
         _headers["X-Exosite-CIK"]  <-  _token;
+
+        if (_configIO == "" || _configIOModificationTime == "") {
+            // Ensure we get _configIO
+            //local epochHTTPTime = "Thu, 1 Jan 1970 12:00:00 GMT";
+            local epochHTTPTime = "0000000001";
+            _configIOModificationTime =  epochHTTPTime;
+        }
+        local configIOHeaders = _headers;
+        configIOHeaders["If-Modified-Since"]  <-  _configIOModificationTime;
+
+        debug("fetching config_io, last modification: " + _configIOModificationTime);
         debug("headers: " + http.jsonencode(_headers));
 
-        local req = http.get(format("%sonep:v1/stack/alias?config_io", _baseURL), _headers);
+        local req = http.get(format("%sonep:v1/stack/alias?config_io", _baseURL), configIOHeaders);
         if (_token != null) req.sendasync(pollConfigIOCallback.bindenv(this));
 
         imp.wakeup(configIORefreshTime, pollConfigIO.bindenv(this));
@@ -181,7 +192,17 @@ class Exosite {
     //
     // This is split from having writeConfigIO be the callback directly so that a user can write their own string via writeConfigIO.
     function pollConfigIOCallback(response) {
-        writeConfigIO(response.body);
+        if (response.statuscode == 200){
+            if ("last-modified" in response.headers) {
+                _configIOModificationTime = response.headers["last-modified"];
+            }
+            writeConfigIO(response.body);
+        } else if (response.statuscode == 304) {
+            debug("config_io not modified, not writing back");
+            return;
+        } else {
+            server.log ("Error in pollConfigIOCallback, ResponseCode: " + response.statuscode);
+        }
     }
 
     // writeConfigIO - Writes a config via http post request
