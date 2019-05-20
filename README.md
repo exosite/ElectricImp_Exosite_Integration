@@ -52,7 +52,7 @@ For a more complete example of usage, see Example/example.agent.nut and Example/
 ### On the device
 ```
 data.var1 <- getVar1();
-data.var1 <- getVar2();
+data.var2 <- getVar2();
 
 agent.send(“reading.sent”, data);
 ```
@@ -78,18 +78,13 @@ The debug mode is off (false) by default, and can be enabled by setting `debugMo
 ```
 exositeAgent.debugMode = true;
 ```
-### configIORefreshTime
-The agent periodically checks the config_io set on the server. The length of time between checks can be set with the `configIORefreshTime` variable. By default, the agent waits 60 seconds before refreshing the config_io.
-```
-exositeAgent.configIORefreshTime = 10;
-```
 
 ## Available Functions
 ### Constructor Exosite(*productId, deviceId*) ###
 | Parameter | Type | Required | Description |
 | -- | -- | -- | -- |
 | productId | string | yes | The Exosite product ID, this can be found in Exosite's Murano.
-| deviceId | string |  no | The name/ID of the device, this needs to be unique for each device within a product.
+| deviceId | string |  no | The name/ID of the device, this needs to be unique for each device within a product. If a deviceID is not provided, ElectricImp's AgentID will be used.
 
 
 **Returns** \

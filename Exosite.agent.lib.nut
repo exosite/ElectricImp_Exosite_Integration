@@ -27,16 +27,15 @@ class Exosite {
 
      //Public settings variables
      //set to true to log debug message on the ElectricImp server
-     debugMode             = true;
+     debugMode             = false;
      //Number of seconds to wait between config_io refreshes. 
-     configIORefreshTime   = 150000; 
+     configIORefreshTime   = 60; 
 
      //Private variables
      _baseURL              = null;
      _headers              = {};
      _deviceId             =  null;
      _configIO             =  null;
-     _configIOModificationTime = "";
      _token                = null;
 
      // constructor
@@ -149,7 +148,7 @@ class Exosite {
     function writeData_w_cb(table, callBack){
         if (!tokenValid()) return;
 
-        debug("writeData: " + http.jsonencode(table));
+        server.log("writeData: " + http.jsonencode(table));
         debug("headers: " + http.jsonencode(_headers));
 
         local req = http.post(format("%sonep:v1/stack/alias", _baseURL), _headers, "data_in=" + http.jsonencode(table));
@@ -299,7 +298,7 @@ class Exosite {
     //Enable debugMode that was defaulted to false
     exositeAgent.debugMode = true;
     //Change number of seconds between config_io refreshes that was defaulted to 60 seconds
-    exositeAgent.configIORefreshTime = 150000;
+    exositeAgent.configIORefreshTime = 15;
 
     device.on("reading.sent", exositeAgent.writeData.bindenv(exositeAgent));
 //END LOCAL AGENT CODE
@@ -310,9 +309,9 @@ class Exosite {
 // Must be commented for relase
 //************************************************************
 //BEGIN TEST WORKAROUND
-    function noop(data) {
-        //Do nothing
-    }
-
+    //function noop(data) {
+    //    //Do nothing
+    //}
+    //
     //device.on("reading.sent", noop);
 //END TEST WORKAROUND
