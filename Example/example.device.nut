@@ -30,7 +30,7 @@
 #require "WS2812.class.nut:3.0.0"
 
 // Define constants
-const SLEEP_TIME = 120;
+const SLEEP_TIME = 10;
 
 // Declare Global Variables
 tempSensor <- null;
@@ -87,6 +87,6 @@ local counter = 0;
 while (true) {
     takeReading();
     counter = counter+1;
-    imp.sleep(2);
+    imp.sleep(SLEEP_TIME);
 }
 
