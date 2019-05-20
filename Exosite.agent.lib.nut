@@ -29,7 +29,7 @@ class Exosite {
      //set to true to log debug message on the ElectricImp server
      debugMode             = true;
      //Number of seconds to wait between config_io refreshes. 
-     configIORefreshTime   = 60; 
+     configIORefreshTime   = 150000; 
 
      //Private variables
      _baseURL              = null;
@@ -149,7 +149,7 @@ class Exosite {
     function writeData_w_cb(table, callBack){
         if (!tokenValid()) return;
 
-        server.log("writeData: " + http.jsonencode(table));
+        debug("writeData: " + http.jsonencode(table));
         debug("headers: " + http.jsonencode(_headers));
 
         local req = http.post(format("%sonep:v1/stack/alias", _baseURL), _headers, "data_in=" + http.jsonencode(table));
@@ -167,22 +167,17 @@ class Exosite {
 
         _headers["X-Exosite-CIK"]  <-  _token;
 
-        if (_configIO == "" || _configIOModificationTime == "") {
-            // Ensure we get _configIO
-            //local epochHTTPTime = "Thu, 1 Jan 1970 12:00:00 GMT";
-            local epochHTTPTime = "0000000001";
-            _configIOModificationTime =  epochHTTPTime;
+        local configIOHeaders = clone(_headers);
+        if (_configIO != "") {
+            //Long Poll for a change if we already have one. Else, just grab it
+            configIOHeaders["Request-Timeout"] <- configIORefreshTime;
         }
-        local configIOHeaders = _headers;
-        configIOHeaders["If-Modified-Since"]  <-  _configIOModificationTime;
 
         debug("fetching config_io, last modification: " + _configIOModificationTime);
-        debug("headers: " + http.jsonencode(_headers));
+        debug("headers: " + http.jsonencode(configIOHeaders));
 
         local req = http.get(format("%sonep:v1/stack/alias?config_io", _baseURL), configIOHeaders);
         if (_token != null) req.sendasync(pollConfigIOCallback.bindenv(this));
-
-        imp.wakeup(configIORefreshTime, pollConfigIO.bindenv(this));
     }
 
     // pollConfigIOCallback - Callback for the pollConfigIO request
@@ -192,6 +187,9 @@ class Exosite {
     //
     // This is split from having writeConfigIO be the callback directly so that a user can write their own string via writeConfigIO.
     function pollConfigIOCallback(response) {
+        debug("Server Response: \n");
+        debug(response.statuscode + "\n");
+        debug(response.body + "\n");
         if (response.statuscode == 200){
             if ("last-modified" in response.headers) {
                 _configIOModificationTime = response.headers["last-modified"];
@@ -199,10 +197,12 @@ class Exosite {
             writeConfigIO(response.body);
         } else if (response.statuscode == 304) {
             debug("config_io not modified, not writing back");
-            return;
         } else {
-            server.log ("Error in pollConfigIOCallback, ResponseCode: " + response.statuscode);
+            server.log ("Error in pollConfigIOCallback, ResponseCode: " + response.statuscode + response.body);
         }
+
+        //Use wakeup to break up the call stack. This could possibly create a stack overflow if we just kept calling pollConfigIO directly
+        imp.wakeup(0.0, pollConfigIO.bindenv(this));
     }
 
     // writeConfigIO - Writes a config via http post request
@@ -294,7 +294,7 @@ class Exosite {
     //Enable debugMode that was defaulted to false
     exositeAgent.debugMode = true;
     //Change number of seconds between config_io refreshes that was defaulted to 60 seconds
-    exositeAgent.configIORefreshTime = 15;
+    exositeAgent.configIORefreshTime = 150000;
 
     device.on("reading.sent", exositeAgent.writeData.bindenv(exositeAgent));
 //END LOCAL AGENT CODE
@@ -305,9 +305,9 @@ class Exosite {
 // Must be commented for relase
 //************************************************************
 //BEGIN TEST WORKAROUND
-    //function noop(data) {
-    //    //Do nothing
-    //}
-    //
+    function noop(data) {
+        //Do nothing
+    }
+
     //device.on("reading.sent", noop);
 //END TEST WORKAROUND
