@@ -42,8 +42,6 @@ class MuranoTestCase extends ImpTestCase {
 
         //Enable debugMode that was defaulted to false
         _exositeAgent.debugMode = true;
-        //Change number of seconds between config_io refreshes that was defaulted to 60 seconds
-        _exositeAgent.configIORefreshTime = 5;
     }
 
     function clear_token(){
