@@ -9,6 +9,6 @@
 
 server.log("Clearing token from server table");
 local persist = server.load(); 
-persist.rawdelete(exosite_token); 
+persist.rawdelete("exosite_token"); 
 local result = server.save(persist);
 server.log("Result of save: " + result);
