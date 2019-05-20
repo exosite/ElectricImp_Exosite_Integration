@@ -171,7 +171,7 @@ class Exosite {
         }
         configIOHeaders["X-Exosite-CIK"]  <-  _token;
 
-        debug("fetching config_io, last modification: " + _configIOModificationTime);
+        debug("fetching config_io");
         debug("headers: " + http.jsonencode(configIOHeaders));
 
         local req = http.get(format("%sonep:v1/stack/alias?config_io", _baseURL), configIOHeaders);
