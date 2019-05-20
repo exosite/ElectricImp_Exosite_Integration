@@ -161,7 +161,7 @@ class Exosite {
     // Parameters: None
     function pollConfigIO() {
         if (!tokenValid()) {
-            imp.wakeup(13, pollConfigIO.bindenv(this));
+            imp.wakeup(configIORefreshTime, pollConfigIO.bindenv(this));
             return;
         }
 
