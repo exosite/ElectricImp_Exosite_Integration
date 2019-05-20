@@ -297,8 +297,8 @@ class Exosite {
 
     //Enable debugMode that was defaulted to false
     exositeAgent.debugMode = true;
-    //Change number of seconds between config_io refreshes that was defaulted to 60 seconds
-    exositeAgent.configIORefreshTime = 15;
+    //Change number of milliseconds between config_io refreshes
+    exositeAgent.configIORefreshTime = 150000;
 
     device.on("reading.sent", exositeAgent.writeData.bindenv(exositeAgent));
 //END LOCAL AGENT CODE
