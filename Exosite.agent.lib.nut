@@ -27,7 +27,7 @@ class Exosite {
 
      //Public settings variables
      //set to true to log debug message on the ElectricImp server
-     debugMode             = true;
+     debugMode             = false;
      //Number of seconds to wait between config_io refreshes. 
      configIORefreshTime   = 150000; 
 
