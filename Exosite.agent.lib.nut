@@ -35,7 +35,7 @@ class Exosite {
      _baseURL              = null;
      _headers              = {};
      _deviceId             =  null;
-     _configIO             =  "";
+     _configIO             =  null;
      _configIOModificationTime = "";
      _token                = null;
 
@@ -161,23 +161,22 @@ class Exosite {
     // Parameters: None
     function pollConfigIO() {
         if (!tokenValid()) {
-            imp.wakeup(configIORefreshTime, pollConfigIO.bindenv(this));
+            imp.wakeup(13, pollConfigIO.bindenv(this));
             return;
         }
 
-        _headers["X-Exosite-CIK"]  <-  _token;
-
         local configIOHeaders = clone(_headers);
-        if (_configIO != "") {
+        if (_configIO != null) {
             //Long Poll for a change if we already have one. Else, just grab it
             configIOHeaders["Request-Timeout"] <- configIORefreshTime;
         }
+        configIOHeaders["X-Exosite-CIK"]  <-  _token;
 
         debug("fetching config_io, last modification: " + _configIOModificationTime);
         debug("headers: " + http.jsonencode(configIOHeaders));
 
         local req = http.get(format("%sonep:v1/stack/alias?config_io", _baseURL), configIOHeaders);
-        if (_token != null) req.sendasync(pollConfigIOCallback.bindenv(this));
+        req.sendasync(pollConfigIOCallback.bindenv(this));
     }
 
     // pollConfigIOCallback - Callback for the pollConfigIO request
@@ -191,18 +190,24 @@ class Exosite {
         debug(response.statuscode + "\n");
         debug(response.body + "\n");
         if (response.statuscode == 200){
-            if ("last-modified" in response.headers) {
-                _configIOModificationTime = response.headers["last-modified"];
-            }
             writeConfigIO(response.body);
-        } else if (response.statuscode == 304) {
+        } else if (response.statuscode == 204) {
+            _configIO = "";
+        }else if (response.statuscode == 304) {
             debug("config_io not modified, not writing back");
         } else {
             server.log ("Error in pollConfigIOCallback, ResponseCode: " + response.statuscode + response.body);
         }
 
         //Use wakeup to break up the call stack. This could possibly create a stack overflow if we just kept calling pollConfigIO directly
-        imp.wakeup(0.0, pollConfigIO.bindenv(this));
+        //429 - too many requests...something wrong is happening and we're calling repeatedly, sleep to counteract this...but it's wrong
+        //401 - Unauthorized, may be in the process of provisioning, wait a minute
+        if (response.statuscode == 429 || response.statuscode == 401) {
+            server.log("Error: config_io responded with code: " + response.statuscode + ". Waiting one minute and trying again");
+            imp.wakeup(60, pollConfigIO.bindenv(this));
+        } else {
+            imp.wakeup(0.0, pollConfigIO.bindenv(this));
+        }
     }
 
     // writeConfigIO - Writes a config via http post request

@@ -33,7 +33,7 @@ const PRODUCT_ID = "c449gfcd11ky00000";
 class MuranoTestCase extends ImpTestCase {
 
     _exositeAgent = null;
-    _actually_test = true; // I can't get the agent code to load directly, need to run the test command, but sometimes I don't want this test code to run...
+    _actually_test = false; // I can't get the agent code to load directly, need to run the test command, but sometimes I don't want this test code to run...
 
     function setUp() {
         if (!_actually_test) return;
@@ -43,7 +43,7 @@ class MuranoTestCase extends ImpTestCase {
         //Enable debugMode that was defaulted to false
         _exositeAgent.debugMode = true;
         //Change number of seconds between config_io refreshes that was defaulted to 60 seconds
-        _exositeAgent.configIORefreshTime = 5;
+        _exositeAgent.configIORefreshTime = 150000;
     }
 
     function clear_token(){
