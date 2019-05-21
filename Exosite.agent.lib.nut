@@ -34,7 +34,6 @@ class Exosite {
 
      //Private variables
      _baseURL              = null;
-     _productId            = null;
      _headers              = {};
      _deviceId             =  null;
      _configIO             =  null;
@@ -47,8 +46,7 @@ class Exosite {
      //      deviceId (required) : string - The name of the device, needs to be unique for each device within a product
      //
     constructor(deviceId) {
-        _baseURL = format("https://%s.m2.exosite.io/", productId);
-        _productId = productId;
+        _baseURL = format("https://%s.m2.exosite.io/", PRODUCT_ID);
         _deviceId = (deviceId == null) ? getDeviceFromURL(http.agenturl()) : deviceId;
 
         _headers["Content-Type"] <- "application/x-www-form-urlencoded; charset=utf-8";
@@ -296,7 +294,7 @@ class Exosite {
     //  Returns: string - Claim code
     function getClaimCode() {
         server.log("Requesting Claim code for: " + _deviceId);
-        local url = format("https://%s.apps.exosite.io/api/devices/%s/reset", _productId, _deviceId);
+        local url = format("https://%s.apps.exosite.io/api/devices/%s/reset", PRODUCT_ID, _deviceId);
         local req = http.get(url, _headers);
         req.sendasync(getClaimCode_Callback.bindenv(this));
     }
