@@ -23,6 +23,7 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 class Exosite {
+      static PRODUCT_ID = "c5nmke836k280000";
       static VERSION = "1.0.0";
 
      //Public settings variables
@@ -33,6 +34,7 @@ class Exosite {
 
      //Private variables
      _baseURL              = null;
+     _productId            = null;
      _headers              = {};
      _deviceId             =  null;
      _configIO             =  null;
@@ -44,8 +46,9 @@ class Exosite {
      //      productId (reqired) : string - The ExoSense productId to send to
      //      deviceId (required) : string - The name of the device, needs to be unique for each device within a product
      //
-    constructor(productId, deviceId) {
+    constructor(deviceId) {
         _baseURL = format("https://%s.m2.exosite.io/", productId);
+        _productId = productId;
         _deviceId = (deviceId == null) ? getDeviceFromURL(http.agenturl()) : deviceId;
 
         _headers["Content-Type"] <- "application/x-www-form-urlencoded; charset=utf-8";
@@ -80,7 +83,7 @@ class Exosite {
     // Parameters: None
     //
     function provision() {
-        provision_w_cb(setToken.bindenv(this));
+        provision_w_cb(setTokenAndGetClaimCode.bindenv(this));
     }
 
     // Private Function - provisions a device with a custom callback
@@ -97,6 +100,11 @@ class Exosite {
         local data = format("id=%s", _deviceId);
         local req = http.post(activate_url, _headers, data);
         req.sendasync(callBack);
+    }
+
+    function setTokenAndGetClaimCode(response){
+        setToken(response);
+        getClaimCode();
     }
 
     //Private Function
@@ -148,7 +156,7 @@ class Exosite {
     function writeData_w_cb(table, callBack){
         if (!tokenValid()) return;
 
-        server.log("writeData: " + http.jsonencode(table));
+        debug("writeData: " + http.jsonencode(table));
         debug("headers: " + http.jsonencode(_headers));
 
         local req = http.post(format("%sonep:v1/stack/alias", _baseURL), _headers, "data_in=" + http.jsonencode(table));
@@ -218,7 +226,7 @@ class Exosite {
     // See https://exosense.readme.io/docs/channel-configuration for more information
     function writeConfigIO(config_io){
         if (!tokenValid()) return;
-        server.log("writeConfigIO: " + config_io);
+        debug("writeConfigIO: " + config_io);
         debug("headers: " + http.jsonencode(_headers));
 
         _configIO = config_io;
@@ -271,7 +279,7 @@ class Exosite {
         if (_token == null) {
             local settings = server.load();
             if (settings.rawin("exosite_token")) {
-                server.log("Found stored Token: " + settings.exosite_token);
+                debug("Found stored Token: " + settings.exosite_token);
                 _token = settings.exosite_token;
                 _headers["X-Exosite-CIK"]  <-  _token;
             } else {
@@ -282,6 +290,25 @@ class Exosite {
         return true;
     }
 
+    // getClaimCode - Get's the claim code of the device for the user to claim in PDaaS
+    //                 Note, the device must be provisioned.
+    //
+    //  Returns: string - Claim code
+    function getClaimCode() {
+        server.log("Requesting Claim code for: " + _deviceId);
+        local url = format("https://%s.apps.exosite.io/api/devices/%s/reset", _productId, _deviceId);
+        local req = http.get(url, _headers);
+        req.sendasync(getClaimCode_Callback.bindenv(this));
+    }
+
+    function getClaimCode_Callback(response){
+        if (response.statuscode == 200) {
+            server.log("Claim Code: " + response.body);
+        } else {
+            server.log(format("Error: Did not receive a claim code, Response Code: %d - Body:%s", response.statuscode, response.body));
+        }
+    }
+
 }
 
 //*********************************************************
@@ -290,15 +317,8 @@ class Exosite {
 // Limitations of ElectricImp require this all to be in the same file.
 //*********************************************************
 //BEGIN LOCAL AGENT CODE
-    const PRODUCT_ID = "c449gfcd11ky00000";
-
-    exositeAgent <- Exosite(PRODUCT_ID, null);
+    exositeAgent <- Exosite(null);
     exositeAgent.provision();
-
-    //Enable debugMode that was defaulted to false
-    exositeAgent.debugMode = true;
-    //Change number of milliseconds between config_io refreshes
-    exositeAgent.configIORefreshTime = 150000;
 
     device.on("reading.sent", exositeAgent.writeData.bindenv(exositeAgent));
 //END LOCAL AGENT CODE
@@ -309,9 +329,9 @@ class Exosite {
 // Must be commented for relase
 //************************************************************
 //BEGIN TEST WORKAROUND
-    //function noop(data) {
-    //    //Do nothing
-    //}
-    //
-    //device.on("reading.sent", noop);
+    function noop(data) {
+        //Do nothing
+    }
+
+//    device.on("reading.sent", noop);
 //END TEST WORKAROUND

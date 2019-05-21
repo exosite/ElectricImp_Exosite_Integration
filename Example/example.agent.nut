@@ -27,14 +27,7 @@
 
 #require "Exosite.agent.lib.nut:1.0.0"
 
-const PRODUCT_ID = <my_product_id>;
-
-exositeAgent <- Exosite(PRODUCT_ID, null);
+exositeAgent <- Exosite(null);
 exositeAgent.provision();
-
-//Enable debugMode that was defaulted to false
-exositeAgent.debugMode = true;
-//Change number of seconds between config_io refreshes that was defaulted to 60 seconds
-exositeAgent.configIORefreshTime = 15;
 
 device.on("reading.sent", exositeAgent.writeData.bindenv(exositeAgent));
