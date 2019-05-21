@@ -29,8 +29,8 @@ class Exosite {
      //Public settings variables
      //set to true to log debug message on the ElectricImp server
      debugMode             = false;
-     //Number of seconds to wait between config_io refreshes. 
-     configIORefreshTime   = 60; 
+     //Number of milliseconds to wait between config_io refreshes. 
+     configIORefreshTime   = 1500000; 
 
      //Private variables
      _baseURL              = null;
@@ -89,6 +89,7 @@ class Exosite {
     function provision_w_cb(callBack){
         if (tokenValid()) {
            server.log("Attempting to provision when there is already a token, aborting provision");
+           getClaimCode();
            return;
         }
         debug("Provisioning");
