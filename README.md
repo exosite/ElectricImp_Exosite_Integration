@@ -111,7 +111,7 @@ There are different modes that can be used with this library. Supported/Released
 **Usage** \
 The `"MuranoProduct"` mode should be selected when a user has their own Murano Product to add their device to.
 
-**Settings** \
+**Settings**
 
 | Parameter | Type | Required | Description |
 | -- | -- | -- | -- |
