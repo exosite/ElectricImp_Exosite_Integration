@@ -29,14 +29,15 @@ class Exosite {
      //set to true to log debug message on the ElectricImp server
      debugMode             = false;
      //Number of seconds to wait between config_io refreshes. 
-     configIORefreshTime   = 60; 
+     configIORefreshTime   = 1500000; 
 
      //Private variables
      _baseURL              = null;
      _headers              = {};
-     _deviceId             =  null;
-     _configIO             =  null;
+     _deviceId             = null;
+     _configIO             = null;
      _token                = null;
+     _productId            = null;
 
      // constructor
      // Returns: Nothing
@@ -44,15 +45,67 @@ class Exosite {
      //      productId (reqired) : string - The ExoSense productId to send to
      //      deviceId (required) : string - The name of the device, needs to be unique for each device within a product
      //
-    constructor(productId, deviceId) {
-        _baseURL = format("https://%s.m2.exosite.io/", productId);
-        _deviceId = (deviceId == null) ? getDeviceFromURL(http.agenturl()) : deviceId;
+    constructor(mode, settings) {
+        if (!isValidMode(mode)) {
+            server.error(format("Exosite Library Mode: %s not supported", mode));
+        }
+
+        _productId = getProductId(mode, settings);
+
+        _baseURL = format("https://%s.m2.exosite.io/", _productId);
+        _deviceId = (tableGet(settings, "deviceId") == null) ?  getDeviceFromURL(http.agenturl()) : settings.deviceId;
 
         _headers["Content-Type"] <- "application/x-www-form-urlencoded; charset=utf-8";
         _headers["Accept"] <- "application/x-www-form-urlencoded; charset=utf-8";
 
-        //Start polling for config_io
-        pollConfigIO();
+        // Probably only overriding this in unit tests, otherwise we want to make sure config_io is up to date
+        local overridePollConfigIO = tableGet(settings, "dontPollConfigIO");
+        if (!overridePollConfigIO) {
+            pollConfigIO();
+        }
+    }
+
+    //Private function that makes checking a table entry easier
+    // Returns: value if it exists
+    //          null if it doesn't exist (or is null)
+    // Parameters 
+    //           table: table - table to check
+    //           index: string - index to check
+    function tableGet(table, index) {
+        if (!table.rawin(index)) {
+            return null;
+        }
+        return table[index];
+    }
+
+    //Private function to assist in different modes
+    // Returns: string - the productId to connect to
+    // Parameters: 
+    //             mode: string - name of the mode being used
+    //             settings: table - table of settings, required if the deviceId is expected to be in the settings table
+    function getProductId(mode, settings) {
+        if (mode == "MuranoProduct") {
+            local productId = tableGet(settings, "productId");
+            if (productId == null) {
+                server.error("Mode MuranoProduct requires a productId in settings");
+            }
+            return productId;
+        }
+        else {
+            server.error("No product ID found");
+        }
+    }
+
+    // Private function to check if the given mode is known/supported
+    // returns boolean - True if mode found
+    // Parameter:
+    //           mode: string - mode identifier
+    function isValidMode(mode) {
+        if (mode == "MuranoProduct"
+            /* || mode == "PDaaS"*/) {
+            return true;
+        }
+        return false;
     }
 
     //Private Helper function to get unique ID from each device
@@ -134,6 +187,7 @@ class Exosite {
     //
     // This is anticipated to be the function to call for device.on("reading.sent", <pointer_to_this_function>);
     function writeData(table) {
+        server.log("Writing Data");
         writeData_w_cb(table, responseErrorCheck.bindenv(this));
     }
 
@@ -281,7 +335,6 @@ class Exosite {
         }
         return true;
     }
-
 }
 
 //*********************************************************
@@ -292,13 +345,14 @@ class Exosite {
 //BEGIN LOCAL AGENT CODE
     const PRODUCT_ID = "c449gfcd11ky00000";
 
-    exositeAgent <- Exosite(PRODUCT_ID, null);
+    local settings = {};
+    settings.productId <- PRODUCT_ID;
+
+    exositeAgent <- Exosite("MuranoProduct", settings);
     exositeAgent.provision();
 
     //Enable debugMode that was defaulted to false
     exositeAgent.debugMode = true;
-    //Change number of milliseconds between config_io refreshes
-    exositeAgent.configIORefreshTime = 150000;
 
     device.on("reading.sent", exositeAgent.writeData.bindenv(exositeAgent));
 //END LOCAL AGENT CODE
