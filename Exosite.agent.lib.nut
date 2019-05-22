@@ -144,7 +144,6 @@ class Exosite {
            return;
         }
         debug("Provisioning");
-        debug("DEBUG_MESSAGE");
         debug("headers: " + http.jsonencode(_headers));
         local activate_url = format("%sprovision/activate", _baseURL);
         local data = format("id=%s", _deviceId);
@@ -187,7 +186,6 @@ class Exosite {
     //
     // This is anticipated to be the function to call for device.on("reading.sent", <pointer_to_this_function>);
     function writeData(table) {
-        server.log("Writing Data");
         writeData_w_cb(table, responseErrorCheck.bindenv(this));
     }
 
@@ -202,7 +200,7 @@ class Exosite {
     function writeData_w_cb(table, callBack){
         if (!tokenValid()) return;
 
-        server.log("writeData: " + http.jsonencode(table));
+        debug("writeData: " + http.jsonencode(table));
         debug("headers: " + http.jsonencode(_headers));
 
         local req = http.post(format("%sonep:v1/stack/alias", _baseURL), _headers, "data_in=" + http.jsonencode(table));
