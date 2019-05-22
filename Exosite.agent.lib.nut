@@ -266,7 +266,7 @@ class Exosite {
     // writeConfigIO - Writes a config via http post request
     // Returns: null
     // Parameters:
-    //            config_io : string - the config_io to post formatted as "string=<config_io_value>"
+    //            config_io : string - the config_io to post formatted as "config_io=<config_io_value>"
     //
     // The config_io is the 'contract' between the device and ExoSense of how the data is going to be transmitted
     // See https://exosense.readme.io/docs/channel-configuration for more information
