@@ -29,12 +29,13 @@
 
 const PRODUCT_ID = <my_product_id>;
 
-exositeAgent <- Exosite(PRODUCT_ID, null);
+local settings = {};
+settings.productId <- PRODUCT_ID;
+
+exositeAgent <- Exosite("MuranoProduct", settings);
 exositeAgent.provision();
 
 //Enable debugMode that was defaulted to false
 exositeAgent.debugMode = true;
-//Change number of seconds between config_io refreshes that was defaulted to 60 seconds
-exositeAgent.configIORefreshTime = 15;
 
 device.on("reading.sent", exositeAgent.writeData.bindenv(exositeAgent));

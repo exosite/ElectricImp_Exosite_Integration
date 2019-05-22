@@ -79,6 +79,10 @@ class Exosite {
     }
 
     //Private function to assist in different modes
+    // Returns: string - the productId to connect to
+    // Parameters: 
+    //             mode: string - name of the mode being used
+    //             settings: table - table of settings, required if the deviceId is expected to be in the settings table
     function getProductId(mode, settings) {
         if (mode == "MuranoProduct") {
             local productId = tableGet(settings, "productId");
@@ -183,6 +187,7 @@ class Exosite {
     //
     // This is anticipated to be the function to call for device.on("reading.sent", <pointer_to_this_function>);
     function writeData(table) {
+        server.log("Writing Data");
         writeData_w_cb(table, responseErrorCheck.bindenv(this));
     }
 
