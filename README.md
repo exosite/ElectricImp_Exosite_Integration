@@ -1,3 +1,4 @@
+# Exosite
 This library provides integration with [Exosite](https://exosite.com/iot-solutions/condition-monitoring/) by wrapping the [Exosite HTTPS Device API](http://docs.exosite.com/reference/products/device-api/http/).
 
 **To use this library, add** `#require "Exosite.agent.lib.nut:1.0.0"` **to the top of your agent code.**
@@ -111,10 +112,11 @@ There are different modes that can be used with this library. Supported/Released
 The `"MuranoProduct"` mode should be selected when a user has their own Murano Product to add their device to.
 
 **Settings** \
+
 | Parameter | Type | Required | Description |
 | -- | -- | -- | -- |
-| productId | string | yes | The Murano Product ID to connect and send data to
-| deviceId  | string | no  | The Device ID to provision as. If not provided, the Electric Imp agent ID will be used. This must be unique between devices in the product.
+| productId | string | yes | The Murano Product ID to connect and send data to | 
+| deviceId  | string | no  | The Device ID to provision as. If not provided, the Electric Imp agent ID will be used. This must be unique between devices in the product. |
 
 
 
