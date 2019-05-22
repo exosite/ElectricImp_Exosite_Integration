@@ -118,5 +118,13 @@ The `"MuranoProduct"` mode should be selected when a user has their own Murano P
 | productId | string | yes | The Murano Product ID to connect and send data to | 
 | deviceId  | string | no  | The Device ID to provision as. If not provided, the Electric Imp agent ID will be used. This must be unique between devices in the product. |
 
+**Example Settings**
+
+```
+local settings = {};
+settings.productId = "c449gfcd11ky00002";
+settings.deviceId  = "device0001";
+```
+
 
 
