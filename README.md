@@ -17,7 +17,7 @@ This library provides integration with [Exosite](https://exosite.com/iot-solutio
   * [Modes](#modes)
      * [MuranoProduct](#muranoproduct)
   * [Troubleshooting](#troubleshooting)
-     * [Authorization Issues](#authorizationissues)
+     * [Authorization Issues](#authorization-issues)
 
 ## What this does
 Provides an API wrapper to create/provision a device\
@@ -137,11 +137,12 @@ If you are recieving 401 Unauthorized error responses. The Auth token may be out
 ** Solution **
 To mitigate this issue, clear the saved token in the agent, and reprovision the device using the steps below.
 
-1.) Save current agent code
+1.) Save current agent code \
 2.) Clear the agent's token 
-    + Paste the contents of clearTable.agent.nut into the Agent code in impCentral.
-    + Commit and run the agent code.
-3.) Delete the device from Murano
+  * Paste the contents of clearTable.agent.nut into the Agent code in impCentral. 
+  * Commit and run the agent code. \
+  
+3.) Delete the device from Murano \
 4.) Reprovision the device by executing provision() on the Exosite Library
 
 
