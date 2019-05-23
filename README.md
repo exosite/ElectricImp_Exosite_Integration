@@ -140,7 +140,7 @@ To mitigate this issue, clear the saved token in the agent, and reprovision the 
 1.) Save current agent code \
 2.) Clear the agent's token 
   * Paste the contents of clearTable.agent.nut into the Agent code in impCentral. 
-  * Commit and run the agent code. \
+  * Commit and run the agent code. 
   
 3.) Delete the device from Murano \
 4.) Reprovision the device by executing provision() on the Exosite Library
