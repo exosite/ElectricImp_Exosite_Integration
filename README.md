@@ -134,7 +134,8 @@ To assist in troubleshooting, ensure [debugMode](#debugmode) is enabled on the a
 ### Authorization Issues ###
 If you are recieving 401 Unauthorized error responses. The Auth token may be out of sync with the Exosite Product.
 
-** Solution **
+**Solution**
+
 To mitigate this issue, clear the saved token in the agent, and reprovision the device using the steps below.
 
 1.) Save current agent code \
