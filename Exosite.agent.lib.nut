@@ -23,7 +23,7 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 class Exosite {
-      static PRODUCT_ID = "c5nmke836k280000";
+      static PDAAS_PRODUCT_ID = "c5nmke836k280000";
       static VERSION = "1.0.0";
 
      //Public settings variables
@@ -39,6 +39,7 @@ class Exosite {
      _configIO             = null;
      _token                = null;
      _productId            = null;
+     _mode                 = null;
 
      // constructor
      // Returns: Nothing
@@ -51,6 +52,7 @@ class Exosite {
             server.error(format("Exosite Library Mode: %s not supported", mode));
         }
 
+        _mode = mode;
         _productId = getProductId(mode, settings);
 
         _baseURL = format("https://%s.m2.exosite.io/", _productId);
@@ -85,16 +87,19 @@ class Exosite {
     //             mode: string - name of the mode being used
     //             settings: table - table of settings, required if the deviceId is expected to be in the settings table
     function getProductId(mode, settings) {
+        local productId = null
         if (mode == "MuranoProduct") {
-            local productId = tableGet(settings, "productId");
+            productId = tableGet(settings, "productId");
             if (productId == null) {
                 server.error("Mode MuranoProduct requires a productId in settings");
             }
-            return productId;
-        }
-        else {
+        } else if (mode == "PDaaSProduct") {
+            productId = PDAAS_PRODUCT_ID;
+        } else {
             server.error("No product ID found");
         }
+
+        return productId;
     }
 
     // Private function to check if the given mode is known/supported
@@ -103,7 +108,7 @@ class Exosite {
     //           mode: string - mode identifier
     function isValidMode(mode) {
         if (mode == "MuranoProduct"
-            /* || mode == "PDaaS"*/) {
+             || mode == "PDaaSProduct") {
             return true;
         }
         return false;
@@ -346,8 +351,11 @@ class Exosite {
     //
     //  Returns: string - Claim code
     function getClaimCode() {
+        // This is only valid in Product as a Service
+        if (mode != "PDaaSProduct") return;
+
         server.log("Requesting Claim code for: " + _deviceId);
-        local url = format("https://%s.apps.exosite.io/api/devices/%s/reset", PRODUCT_ID, _deviceId);
+        local url = format("https://%s.apps.exosite.io/api/devices/%s/reset", PDAAS_PRODUCT_ID, _deviceId);
         local req = http.get(url, _headers);
         req.sendasync(getClaimCode_Callback.bindenv(this));
     }
@@ -372,7 +380,8 @@ class Exosite {
     local settings = {};
     settings.productId <- PRODUCT_ID;
 
-    exositeAgent <- Exosite("MuranoProduct", settings);
+//    exositeAgent <- Exosite("MuranoProduct", settings);
+    exositeAgent <- Exosite("PDaaSProduct", settings);
     exositeAgent.provision();
 
     //Enable debugMode that was defaulted to false
