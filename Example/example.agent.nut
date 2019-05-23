@@ -27,7 +27,15 @@
 
 #require "Exosite.agent.lib.nut:1.0.0"
 
-exositeAgent <- Exosite(null);
+const PRODUCT_ID = <my_product_id>;
+
+local settings = {};
+settings.productId <- PRODUCT_ID;
+
+exositeAgent <- Exosite("MuranoProduct", settings);
 exositeAgent.provision();
+
+//Enable debugMode that was defaulted to false
+exositeAgent.debugMode = true;
 
 device.on("reading.sent", exositeAgent.writeData.bindenv(exositeAgent));

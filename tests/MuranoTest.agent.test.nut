@@ -33,12 +33,19 @@ const PRODUCT_ID = "c449gfcd11ky00000";
 class MuranoTestCase extends ImpTestCase {
 
     _exositeAgent = null;
-    _actually_test = false; // I can't get the agent code to load directly, need to run the test command, but sometimes I don't want this test code to run...
+    // False skips tests that have outside dependencies
+    // If True ensure the device is not provisioned in the PRODUCT_ID specified
+    _actually_test = false;
+
+    default_test_settings = {};
 
     function setUp() {
+        default_test_settings.productId <- PRODUCT_ID;
+        default_test_settings.dontPollConfigIO <- true;
+
         if (!_actually_test) return;
         clear_token();
-        _exositeAgent = Exosite(PRODUCT_ID, null);
+        _exositeAgent = Exosite("MuranoProduct", default_test_settings);
 
         //Enable debugMode that was defaulted to false
         _exositeAgent.debugMode = true;
@@ -46,6 +53,7 @@ class MuranoTestCase extends ImpTestCase {
         _exositeAgent.configIORefreshTime = 150000;
     }
 
+    // helper function for setup
     function clear_token(){
         server.log("Clearing token from server table");
         local persist = server.load(); 
@@ -74,6 +82,35 @@ class MuranoTestCase extends ImpTestCase {
     function test03_writeData(){
         if (!_actually_test) return;
         return writeDataTest();
+    }
+
+    function test04_tableGet(){
+       local agent = Exosite("MuranoProduct", default_test_settings); 
+
+       local table = {};
+       table.deviceId <- "one";
+       table["thisKey"] <- "two";
+       table.nullVal <- null;
+
+        this.assertEqual("one", agent.tableGet(table, "deviceId"));
+        this.assertEqual("two", agent.tableGet(table, "thisKey"));
+        this.assertEqual(null,  agent.tableGet(table, "nullVal"));
+        this.assertEqual(null,  agent.tableGet(table, "notThere"));
+    }
+
+    function test05_setDeviceId(){
+       local settings = clone(default_test_settings);
+       settings.dontPollConfigIO <- true;
+       settings.deviceId <- "device1";
+       local agent = Exosite("MuranoProduct", settings); 
+
+       this.assertEqual(agent._deviceId, "device1");
+    }
+
+    function test06_defaultDeviceId(){
+       local agent = Exosite("MuranoProduct", default_test_settings); 
+
+       this.assertEqual(agent._deviceId, agent.getDeviceFromURL(http.agenturl()));
     }
 
     function provision_test() {
