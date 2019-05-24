@@ -29,10 +29,12 @@
 // 2.) Ensure the current device being tested is not provisioned
 // 3.) From the repository root run `impt test run` (see tests/README.md for more detail)
 
-const PRODUCT_ID = "c449gfcd11ky00000";
+const PRODUCT_ID = "";
+
 class MuranoTestCase extends ImpTestCase {
 
     _exositeAgent = null;
+    _test_token = null;
     // False skips tests that have outside dependencies
     // If True ensure the device is not provisioned in the PRODUCT_ID specified
     _actually_test = false;
@@ -40,33 +42,17 @@ class MuranoTestCase extends ImpTestCase {
     default_test_settings = {};
 
     function setUp() {
-        default_test_settings.productId <- PRODUCT_ID;
-        default_test_settings.dontPollConfigIO <- true;
+        default_test_settings.productId <- "c449gfcd11ky00000";
 
         if (!_actually_test) return;
-        clear_token();
-        _exositeAgent = Exosite("MuranoProduct", default_test_settings);
+        _exositeAgent = Exosite(EXOSITE_MODES.MURANO_PRODUCT, default_test_settings);
 
         //Enable debugMode that was defaulted to false
-        _exositeAgent.debugMode = true;
-        //Change number of milliseconds between config_io refreshes that was defaulted to 60 seconds
-        _exositeAgent.configIORefreshTime = 150000;
-    }
-
-    // helper function for setup
-    function clear_token(){
-        server.log("Clearing token from server table");
-        local persist = server.load(); 
-        if (persist.rawin("exosite_token")) {
-            persist.rawdelete("exosite_token"); 
-        }
-        local result = server.save(persist);
-        server.log("Result of save: " + result);
+        _exositeAgent.setDebugMode(true);
     }
 
     function test01_createDevice() {
         if (!_actually_test) return;
-        this.assertTrue(!_exositeAgent.tokenValid());
         return provision_test();
     }
 
@@ -75,49 +61,50 @@ class MuranoTestCase extends ImpTestCase {
         local inputString = "https://agent.electricimp.com/fyofyVhlsf7C";
         local expectedString =  "fyofyVhlsf7C";
 
-        local actualString = _exositeAgent.getDeviceFromURL(inputString);
+        local actualString = _exositeAgent._getDeviceFromURL(inputString);
         this.assertEqual(expectedString, actualString);
     }
 
     function test03_writeData(){
         if (!_actually_test) return;
-        return writeDataTest();
+        return writeDataTest(_test_token);
     }
 
     function test04_tableGet(){
-       local agent = Exosite("MuranoProduct", default_test_settings); 
+       local agent = Exosite(EXOSITE_MODES.MURANO_PRODUCT, default_test_settings); 
 
        local table = {};
        table.deviceId <- "one";
        table["thisKey"] <- "two";
        table.nullVal <- null;
 
-        this.assertEqual("one", agent.tableGet(table, "deviceId"));
-        this.assertEqual("two", agent.tableGet(table, "thisKey"));
-        this.assertEqual(null,  agent.tableGet(table, "nullVal"));
-        this.assertEqual(null,  agent.tableGet(table, "notThere"));
+        this.assertEqual("one", agent._tableGet(table, "deviceId"));
+        this.assertEqual("two", agent._tableGet(table, "thisKey"));
+        this.assertEqual(null,  agent._tableGet(table, "nullVal"));
+        this.assertEqual(null,  agent._tableGet(table, "notThere"));
     }
 
     function test05_setDeviceId(){
        local settings = clone(default_test_settings);
-       settings.dontPollConfigIO <- true;
        settings.deviceId <- "device1";
-       local agent = Exosite("MuranoProduct", settings); 
+       local agent = Exosite(EXOSITE_MODES.MURANO_PRODUCT, settings); 
 
        this.assertEqual(agent._deviceId, "device1");
     }
 
     function test06_defaultDeviceId(){
-       local agent = Exosite("MuranoProduct", default_test_settings); 
+       local agent = Exosite(EXOSITE_MODES.MURANO_PRODUCT, default_test_settings); 
 
-       this.assertEqual(agent._deviceId, agent.getDeviceFromURL(http.agenturl()));
+       this.assertEqual(agent._deviceId, agent._getDeviceFromURL(http.agenturl()));
     }
 
     function provision_test() {
         return Promise(function(resolve, reject) {
-            _exositeAgent.provision_w_cb(function(response){
+            _exositeAgent.provision(function(response){
+                    this.info(response.statuscode);
+                    this.info(response.body);
                     if (response.statuscode == 200 || response.statuscode == 204) {
-                        _exositeAgent.setToken(response);
+                        _test_token = response.body;
                         resolve(response.statuscode);
                     } else {
                         reject(response.statuscode);
@@ -126,13 +113,13 @@ class MuranoTestCase extends ImpTestCase {
         }.bindenv(this));
     }
 
-    function writeDataTest(){
+    function writeDataTest(_test_token){
         return Promise(function(resolve, reject) {
             local test_data = {};
             test_data.temp <- 1;
             test_data.press <- 2;
             //Write the data
-            _exositeAgent.writeData_w_cb(test_data, function(response){
+            _exositeAgent._writeData_w_cb(test_data, function(response){
                 //Read the data back
                 readAttribute("data_in", function(response){
                     //Check it's the same
@@ -144,8 +131,8 @@ class MuranoTestCase extends ImpTestCase {
                     } else {
                         resolve(response.body);
                     }
-                }.bindenv(this));
-            }.bindenv(this));
+                }.bindenv(this), _test_token);
+            }.bindenv(this), _test_token);
         }.bindenv(this));
     }
 }
