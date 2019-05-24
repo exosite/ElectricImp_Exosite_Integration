@@ -28,34 +28,12 @@ Provides an API wrapper for the data_in signal
 - [x] Acknowledge config_io write
 
 ## General Usage
-The main things to implement when using this library are: \ 
-  - **Token Handling** A token is recieved when provisioning in a callback, or set directly in Murano. This must persist across device restarts.
+The main things to implement when using this library are: 
+  - **Token Handling** A token is recieved when [provisioning](#provisioncallback) in a callback, or set directly in Murano. This must persist across device restarts.
   - **config_io** The config_io signal defines the type of data that will be transmitted to ExoSense. This can either be set from the device or from the cloud. For more information on config_io, checkout the [ExoSense Documentation on Channel Configuration](https://exosense.readme.io/docs/channel-configuration)
-  - **Writing Data** Writing data should be formatted to match the config_io given to ExoSense.
+  - **Writing Data** [Writing data](#writedatatable-token) should be formatted to match the config_io given to ExoSense.
 
 For a more complete example of usage, see Example/example.agent.nut and Example/example.device.nut
-
-### On the device
-```
-data.var1 <- getVar1();
-data.var2 <- getVar2();
-
-agent.send(“reading.sent”, data);
-```
-
-### In the agent
-```
-#require "Exosite.agent.lib.nut:1.0.0"
-
-const PRODUCT_ID = <my_product_id>;
-local settings = {};
-settings.productId <- PRODUCT_ID;
-
-exositeAgent <- Exosite("MuranoProduct", settings);
-exositeAgent.provision();
-
-device.on("reading.sent", exositeAgent.writeData.bindenv(exositeAgent));
-```
 
 ## Available Functions
 ### Constructor Exosite(*mode, settings*) ###
@@ -127,7 +105,7 @@ Debug Mode enables extra logging in the server log.
 | -- | -- | -- | -- |
 | value | boolean | yes | True = Enable extra debugging logs | 
 
-### setConfigIORefreshTimeout ###
+### setConfigIORefreshTimeout(*val_milliseconds*) ###
 Changes the timeout length for a configIO long poll, defaults to 15000000 ms
 
 | Parameter | Type | Required | Description |
