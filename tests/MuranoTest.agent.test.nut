@@ -37,7 +37,7 @@ class MuranoTestCase extends ImpTestCase {
     _test_token = null;
     // False skips tests that have outside dependencies
     // If True ensure the device is not provisioned in the PRODUCT_ID specified
-    _actually_test = true;
+    _actually_test = false;
 
     default_test_settings = {};
 

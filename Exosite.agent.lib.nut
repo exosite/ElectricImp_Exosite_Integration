@@ -38,6 +38,7 @@ class Exosite {
      _baseURL              = null;
      //Common headers for most all requests
      _headers              = {};
+     _configIOHeaders      = {};
      _deviceId             = null;
      _configIO             = null;
      _productId            = null;
@@ -89,18 +90,10 @@ class Exosite {
     // Parameters:
     //            token: string - CIK Authorization token for the device
     function pollConfigIO(token) {
-        local configIOHeaders = clone(_headers);
-        if (_configIO != null) {
-            //Long Poll for a change if we already have one. Else, just grab it
-            configIOHeaders["Request-Timeout"] <- _configIORefreshTimeout;
-        }
-        configIOHeaders["X-Exosite-CIK"]  <-  token;
+        _configIOHeaders = clone(_headers);
+        _configIOHeaders["X-Exosite-CIK"]  <-  token;
 
-        _debug("fetching config_io");
-        _debug("headers: " + http.jsonencode(configIOHeaders));
-
-        local req = http.get(format("%sonep:v1/stack/alias?config_io", _baseURL), configIOHeaders);
-        req.sendasync(_pollConfigIOCallback.bindenv(this));
+        _configIOLoop();
     }
 
     // writeConfigIO - Writes a config via http post request
@@ -232,6 +225,18 @@ class Exosite {
         req.sendasync(callback.bindenv(this));
     }
 
+    function _configIOLoop() {
+        if (_configIO != null) {
+            //Long Poll for a change if we already have one. Else, just grab it
+            _configIOHeaders["Request-Timeout"] <- _configIORefreshTimeout;
+        }
+        _debug("fetching config_io");
+        _debug("headers: " + http.jsonencode(_configIOHeaders));
+
+        local req = http.get(format("%sonep:v1/stack/alias?config_io", _baseURL), _configIOHeaders);
+        req.sendasync(_pollConfigIOCallback.bindenv(this));
+    }
+
     // pollConfigIOCallback - Callback for the pollConfigIO request
     // Returns: null
     // Parameters:
@@ -243,7 +248,7 @@ class Exosite {
         _debug(response.statuscode + "\n");
         _debug(response.body + "\n");
         if (response.statuscode == 200){
-            writeConfigIO(response.body);
+            writeConfigIO(response.body, _configIOHeaders["X-Exosite-CIK"]);
         } else if (response.statuscode == 204) {
             _configIO = "";
         }else if (response.statuscode == 304) {
@@ -257,9 +262,9 @@ class Exosite {
         //401 - Unauthorized, may be in the process of provisioning, wait a minute
         if (response.statuscode == 429 || response.statuscode == 401) {
             server.log("Error: config_io responded with code: " + response.statuscode + ". Waiting one minute and trying again");
-            imp.wakeup(60, pollConfigIO.bindenv(this));
+            imp.wakeup(60, _configIOLoop.bindenv(this));
         } else {
-            imp.wakeup(0.0, pollConfigIO.bindenv(this));
+            imp.wakeup(0.0, _configIOLoop.bindenv(this));
         }
     }
 
@@ -282,4 +287,5 @@ class Exosite {
         return response.statuscode;
     }
 }
+
 
