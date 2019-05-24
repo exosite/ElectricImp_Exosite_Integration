@@ -22,48 +22,129 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
+enum EXOSITE_MODES {
+    MURANO_PRODUCT
+}
+
 class Exosite {
       static VERSION = "1.0.0";
 
-     //Public settings variables
      //set to true to log debug message on the ElectricImp server
-     debugMode             = false;
+     _debugMode             = false;
      //Number of milliseconds to timeout between config_io refreshes. 
-     configIORefreshTime   = 1500000; 
+     _configIORefreshTimeout   = 1500000; 
 
      //Private variables
      _baseURL              = null;
+     //Common headers for most all requests
      _headers              = {};
      _deviceId             = null;
      _configIO             = null;
-     _token                = null;
      _productId            = null;
 
      // constructor
      // Returns: Nothing
      // Parameters:
-     //      productId (reqired) : string - The ExoSense productId to send to
-     //      deviceId (required) : string - The name of the device, needs to be unique for each device within a product
+     //      mode (reqired) : string - The mode to run the library in, see README for more info on options.
+     //      settings (required) : table - The settings corresponding to the mode being run.
      //
     constructor(mode, settings) {
-        if (!isValidMode(mode)) {
-            server.error(format("Exosite Library Mode: %s not supported", mode));
-        }
-
-        _productId = getProductId(mode, settings);
+        _productId = _getProductId(mode, settings);
 
         _baseURL = format("https://%s.m2.exosite.io/", _productId);
-        _deviceId = (tableGet(settings, "deviceId") == null) ?  getDeviceFromURL(http.agenturl()) : settings.deviceId;
+        _deviceId = (_tableGet(settings, "deviceId") == null) ?  _getDeviceFromURL(http.agenturl()) : settings.deviceId;
 
         _headers["Content-Type"] <- "application/x-www-form-urlencoded; charset=utf-8";
         _headers["Accept"] <- "application/x-www-form-urlencoded; charset=utf-8";
-
-        // Probably only overriding this in unit tests, otherwise we want to make sure config_io is up to date
-        local overridePollConfigIO = tableGet(settings, "dontPollConfigIO");
-        if (!overridePollConfigIO) {
-            pollConfigIO();
-        }
     }
+
+    //TODO
+    //Provision - 
+    function provision(callBack){
+        _debug("Provisioning");
+        _debug("headers: " + http.jsonencode(_headers));
+        local activate_url = format("%sprovision/activate", _baseURL);
+        local data = format("id=%s", _deviceId);
+        local req = http.post(activate_url, _headers, data);
+        req.sendasync(callBack);
+    }
+
+    // writeData - Write a table to the "data_in" channel in the Exosite product
+    // Returns: Nothing
+    // Parameters: 
+    //      table (required) : string - The table to be written to "data_in".
+    //                                 This table should conform to the config_io for the device.
+    //                                 That is, each key should match a channel identifier and the value type should match the channel's data type.
+    //
+    // This is anticipated to be the function to call for device.on("reading.sent", <pointer_to_this_function>);
+    function writeData(table) {
+        _writeData_w_cb(table, _responseErrorCheck.bindenv(this));
+    }
+
+    // pollConfigIO - Fetches the config_io from the Exosite server and writes it back. This is how the device acknowledges the config_io
+    // Returns: Nothing
+    // Parameters:
+    //            token: string - CIK Authorization token for the device
+    function pollConfigIO(token) {
+        local configIOHeaders = clone(_headers);
+        if (_configIO != null) {
+            //Long Poll for a change if we already have one. Else, just grab it
+            configIOHeaders["Request-Timeout"] <- _configIORefreshTimeout;
+        }
+        configIOHeaders["X-Exosite-CIK"]  <-  token;
+
+        _debug("fetching config_io");
+        _debug("headers: " + http.jsonencode(configIOHeaders));
+
+        local req = http.get(format("%sonep:v1/stack/alias?config_io", _baseURL), configIOHeaders);
+        req.sendasync(_pollConfigIOCallback.bindenv(this));
+    }
+
+    // writeConfigIO - Writes a config via http post request
+    // Returns: null
+    // Parameters:
+    //            config_io : string - the config_io to post formatted as "config_io=<config_io_value>"
+    //
+    // The config_io is the 'contract' between the device and ExoSense of how the data is going to be transmitted
+    // See https://exosense.readme.io/docs/channel-configuration for more information
+    function writeConfigIO(config_io, token){
+        local configIOHeaders = clone(_headers);
+        configIOHeaders["X-Exosite-CIK"]  <-  token;
+
+        server.log("writeConfigIO: " + config_io);
+        _debug("headers: " + http.jsonencode(configIOHeaders));
+
+        _configIO = config_io;
+        local req = http.post(format("%sonep:v1/stack/alias", _baseURL), configIOHeaders, _configIO);
+        req.sendasync(_responseErrorCheck.bindenv(this));
+    }
+
+    // readAttribute - Fetches the given attribute from the Exosite server. 
+    // Returns: null
+    // Parameters: None
+    function readAttribute(attribute, callBack, token) {
+        local readAttributeHeaders = clone(_headers);
+        readAttributeHeaders["X-Exosite-CIK"]  <-  token;
+        _debug("fetching attribute: " + attribute);
+        _debug("headers: " + http.jsonencode(readAttributeHeaders));
+
+        local req = http.get(format("%sonep:v1/stack/alias?%s", _baseURL, attribute), readAttributeHeaders);
+        req.sendasync(callBack.bindenv(this));
+    }
+
+    //TODO - Document
+    function setDebugMode(value) {
+        _debugMode = value;
+    }
+
+    //TODO - Document
+    function setConfigIORefreshTimeout(val_milliseconds) {
+        _configIORefreshTimeout = val_milliseconds;
+    }
+
+    //=======================================================
+    //       PRIVATE FUNCTIONS
+    //=======================================================
 
     //Private function that makes checking a table entry easier
     // Returns: value if it exists
@@ -71,7 +152,7 @@ class Exosite {
     // Parameters 
     //           table: table - table to check
     //           index: string - index to check
-    function tableGet(table, index) {
+    function _tableGet(table, index) {
         if (!table.rawin(index)) {
             return null;
         }
@@ -83,36 +164,28 @@ class Exosite {
     // Parameters: 
     //             mode: string - name of the mode being used
     //             settings: table - table of settings, required if the deviceId is expected to be in the settings table
-    function getProductId(mode, settings) {
-        if (mode == "MuranoProduct") {
-            local productId = tableGet(settings, "productId");
-            if (productId == null) {
-                server.error("Mode MuranoProduct requires a productId in settings");
-            }
-            return productId;
-        }
-        else {
-            server.error("No product ID found");
-        }
-    }
+    function _getProductId(mode, settings) {
+        local productId = null;
 
-    // Private function to check if the given mode is known/supported
-    // returns boolean - True if mode found
-    // Parameter:
-    //           mode: string - mode identifier
-    function isValidMode(mode) {
-        if (mode == "MuranoProduct"
-            /* || mode == "PDaaS"*/) {
-            return true;
+        switch (mode) {
+            case EXOSITE_MODES.MURANO_PRODUCT:
+                local productId = _tableGet(settings, "productId");
+                if (productId == null) {
+                    server.error("Mode MuranoProduct requires a productId in settings");
+                }
+                break;
+            default:
+                server.error("No product ID found");
         }
-        return false;
+
+        return productId;
     }
 
     //Private Helper function to get unique ID from each device
     // Returns: ElectricImps AgentID (Unique per device)
     // Parameters:
     //         urlString: string - The agent's URL. This can be retrieved via http.agenturl()
-    function getDeviceFromURL(urlString) {
+    function _getDeviceFromURL(urlString) {
         local splitArray = split(urlString, "/");
         local lastEntry = splitArray.top();
         return lastEntry;
@@ -121,72 +194,11 @@ class Exosite {
     // debug - prints out to server.log if the debug flag is true
     // Returns: Nothing
     // Parameters:
-    //           logVal: string - The value to log to server if debugMode flag is set.
-    function debug(logVal) {
-        if (debugMode) {
+    //           logVal: string - The value to log to server if _debugMode flag is set.
+    function _debug(logVal) {
+        if (_debugMode) {
             server.log(logVal);
         }
-    }
-
-    // provision - Create a new device for the product that was passed in to the constructor
-    // Returns: Nothing
-    // Parameters: None
-    //
-    function provision() {
-        provision_w_cb(setToken.bindenv(this));
-    }
-
-    // Private Function - provisions a device with a custom callback
-    // this is here to assist in testing, otherwise we would just have the provision() function
-    function provision_w_cb(callBack){
-        if (tokenValid()) {
-           server.log("Attempting to provision when there is already a token, aborting provision");
-           return;
-        }
-        debug("Provisioning");
-        debug("headers: " + http.jsonencode(_headers));
-        local activate_url = format("%sprovision/activate", _baseURL);
-        local data = format("id=%s", _deviceId);
-        local req = http.post(activate_url, _headers, data);
-        req.sendasync(callBack);
-    }
-
-    //Private Function
-    // setToken - Takes the response from a provision request and sets the token locally
-    //            Saves the token to non-volatile memory in "exosite_token"
-    // Returns: Nothing
-    // Parameters:
-    //           response: object - http response object from provision request
-    //
-    function setToken(response) {
-        debug(response.body);
-        if (response.statuscode == 200) {
-            debug("Setting TOKEN: " + response.body);
-            _token = response.body;
-            _headers["X-Exosite-CIK"]  <-  _token;
-
-            local settings = server.load();
-            settings.exosite_token <- _token;
-            local result = server.save(settings);
-            if (result != 0) server.error("Could not save settings!");
-        } else if (response.statuscode == 409) {
-            server.log("Response error, may be trying to provision an already provisioned device");
-        } else {
-            server.log("Token not recieved. Error: " + response.statuscode);
-        }
-    }
-
-
-    // writeData - Write a table to the "data_in" channel in the Exosite product
-    // Returns: Nothing
-    // Parameters: 
-    //      table (required) : string - The table to be written to "data_in".
-    //                                 This table should conform to the config_io for the device.
-    //                                 That is, each key should match a channel identifier and the value type should match the channel's data type.
-    //
-    // This is anticipated to be the function to call for device.on("reading.sent", <pointer_to_this_function>);
-    function writeData(table) {
-        writeData_w_cb(table, responseErrorCheck.bindenv(this));
     }
 
     //Private Function
@@ -197,37 +209,12 @@ class Exosite {
     //                                 This table should conform to the config_io for the device.
     //                                 That is, each key should match a channel identifier and the value type should match the channel's data type.
     //      callBack (required) : function - callBack function for the http write request
-    function writeData_w_cb(table, callBack){
-        if (!tokenValid()) return;
-
-        debug("writeData: " + http.jsonencode(table));
-        debug("headers: " + http.jsonencode(_headers));
+    function _writeData_w_cb(table, callBack){
+        _debug("writeData: " + http.jsonencode(table));
+        _debug("headers: " + http.jsonencode(_headers));
 
         local req = http.post(format("%sonep:v1/stack/alias", _baseURL), _headers, "data_in=" + http.jsonencode(table));
         req.sendasync(callBack.bindenv(this));
-    }
-
-    // pollConfigIO - Fetches the config_io from the Exosite server and writes it back. This is how the device acknowledges the config_io
-    // Returns: Nothing
-    // Parameters: None
-    function pollConfigIO() {
-        if (!tokenValid()) {
-            imp.wakeup(configIORefreshTime, pollConfigIO.bindenv(this));
-            return;
-        }
-
-        local configIOHeaders = clone(_headers);
-        if (_configIO != null) {
-            //Long Poll for a change if we already have one. Else, just grab it
-            configIOHeaders["Request-Timeout"] <- configIORefreshTime;
-        }
-        configIOHeaders["X-Exosite-CIK"]  <-  _token;
-
-        debug("fetching config_io");
-        debug("headers: " + http.jsonencode(configIOHeaders));
-
-        local req = http.get(format("%sonep:v1/stack/alias?config_io", _baseURL), configIOHeaders);
-        req.sendasync(pollConfigIOCallback.bindenv(this));
     }
 
     // pollConfigIOCallback - Callback for the pollConfigIO request
@@ -236,18 +223,18 @@ class Exosite {
     //             response - the response object for the http request
     //
     // This is split from having writeConfigIO be the callback directly so that a user can write their own string via writeConfigIO.
-    function pollConfigIOCallback(response) {
-        debug("Server Response: \n");
-        debug(response.statuscode + "\n");
-        debug(response.body + "\n");
+    function _pollConfigIOCallback(response) {
+        _debug("Server Response: \n");
+        _debug(response.statuscode + "\n");
+        _debug(response.body + "\n");
         if (response.statuscode == 200){
             writeConfigIO(response.body);
         } else if (response.statuscode == 204) {
             _configIO = "";
         }else if (response.statuscode == 304) {
-            debug("config_io not modified, not writing back");
+            _debug("config_io not modified, not writing back");
         } else {
-            server.log ("Error in pollConfigIOCallback, ResponseCode: " + response.statuscode + response.body);
+            server.log ("Error in _pollConfigIOCallback, ResponseCode: " + response.statuscode + response.body);
         }
 
         //Use wakeup to break up the call stack. This could possibly create a stack overflow if we just kept calling pollConfigIO directly
@@ -261,42 +248,11 @@ class Exosite {
         }
     }
 
-    // writeConfigIO - Writes a config via http post request
-    // Returns: null
-    // Parameters:
-    //            config_io : string - the config_io to post formatted as "config_io=<config_io_value>"
-    //
-    // The config_io is the 'contract' between the device and ExoSense of how the data is going to be transmitted
-    // See https://exosense.readme.io/docs/channel-configuration for more information
-    function writeConfigIO(config_io){
-        if (!tokenValid()) return;
-        server.log("writeConfigIO: " + config_io);
-        debug("headers: " + http.jsonencode(_headers));
-
-        _configIO = config_io;
-        local req = http.post(format("%sonep:v1/stack/alias", _baseURL), _headers, _configIO);
-        req.sendasync(responseErrorCheck.bindenv(this));
-    }
-
-    // readAttribute - Fetches the given attribute from the Exosite server. 
-    // Returns: null
-    // Parameters: None
-    function readAttribute(attribute, callBack) {
-        if (!tokenValid()) return;
-
-        _headers["X-Exosite-CIK"]  <-  _token;
-        debug("fetching attribute: " + attribute);
-        debug("headers: " + http.jsonencode(_headers));
-
-        local req = http.get(format("%sonep:v1/stack/alias?%s", _baseURL, attribute), _headers);
-        req.sendasync(callBack.bindenv(this));
-    }
-
     // responseErrorCheck - Checks the status code of an http response and prints to the server log
     // Returns: The response's status code
     // Parameters:
     //            - response : object - response object from the http request
-    function responseErrorCheck(response) {
+    function _responseErrorCheck(response) {
         // 200 - Ok           - Successful Request, returning requested values
         // 204 - No Content   - Successful Request, nothing will be returned
         // 4xx - Client Error - There was an error with the request by the client
@@ -304,33 +260,10 @@ class Exosite {
         // 401 - Unauthorized - Missing or Invalid Credentials
         // 415 - Unsupported media type - missing header
         // 5xx - Server Error - Unhandled server error. Contact Support
-        debug("Server Response: \n");
-        debug(response.statuscode + "\n");
-        debug(response.body + "\n");
+        _debug("Server Response: \n");
+        _debug(response.statuscode + "\n");
+        _debug(response.body + "\n");
 
         return response.statuscode;
-    }
-
-    // Private Function
-    // tokenValid - Checks for a token in the _token variable, 
-    //              if it's not there, attempts to revtrieve it from non-volatile memory, 
-    //              if it's still not there, returns false
-    //
-    //  Returns: true if _token is populated.
-    //           false if no _token found.
-    //
-    function tokenValid(){
-        if (_token == null) {
-            local settings = server.load();
-            if (settings.rawin("exosite_token")) {
-                server.log("Found stored Token: " + settings.exosite_token);
-                _token = settings.exosite_token;
-                _headers["X-Exosite-CIK"]  <-  _token;
-            } else {
-                server.log("No token found, maybe need to provision?");
-                return false;
-            }
-        }
-        return true;
     }
 }
