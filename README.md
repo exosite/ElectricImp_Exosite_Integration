@@ -4,8 +4,6 @@ This library provides integration with [Exosite](https://exosite.com/iot-solutio
 **To use this library, add** `#require "Exosite.agent.lib.nut:1.0.0"` **to the top of your agent code.**
   * [What this does](#what-this-does)
   * [General Usage](#general-usage)
-     * [On the device](#on-the-device)
-     * [In the agent](#in-the-agent)
   * [Available Functions](#available-functions)
      * [Constructor Exosite(<em>mode, settings</em>)](#constructor-exositemode-settings)
      * [provision(<em>callback</em>)](#provisioncallback)
@@ -14,7 +12,7 @@ This library provides integration with [Exosite](https://exosite.com/iot-solutio
      * [writeConfigIO(<em>config_io</em>, <em>token</em>)](#writeconfigioconfig_io-token)
      * [readAttribute(<em>attribute</em>, <em>callback</em>, <em>token</em>)](#readattributeattribute-callback-token)
      * [setDebugMode(<em>value</em>)](#setdebugmodevalue)
-     * [setConfigIORefreshTimeout](#setconfigiorefreshtimeout)
+     * [setConfigIORefreshTimeout(<em>val_milliseconds</em>)](#setconfigiorefreshtimeoutval_milliseconds)
   * [Modes](#modes)
      * [MuranoProduct](#muranoproduct)
   * [Troubleshooting](#troubleshooting)
