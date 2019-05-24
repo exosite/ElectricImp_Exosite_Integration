@@ -23,7 +23,7 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 enum EXOSITE_MODES {
-    MURANO_PRODUCT
+    MURANO_PRODUCT = "EXOSITE_MODE_MURANO_PRODUCT"
 }
 
 class Exosite {
@@ -182,7 +182,7 @@ class Exosite {
 
         switch (mode) {
             case EXOSITE_MODES.MURANO_PRODUCT:
-                local productId = _tableGet(settings, "productId");
+                productId = _tableGet(settings, "productId");
                 if (productId == null) {
                     server.error("Mode MuranoProduct requires a productId in settings");
                 }
@@ -228,7 +228,7 @@ class Exosite {
         _debug("writeData: " + http.jsonencode(table));
         _debug("headers: " + http.jsonencode(_headers));
 
-        local req = http.post(format("%sonep:v1/stack/alias", _baseURL), _headers, "data_in=" + http.jsonencode(table));
+        local req = http.post(format("%sonep:v1/stack/alias", _baseURL), writeDataHeaders, "data_in=" + http.jsonencode(table));
         req.sendasync(callback.bindenv(this));
     }
 
@@ -282,3 +282,4 @@ class Exosite {
         return response.statuscode;
     }
 }
+
