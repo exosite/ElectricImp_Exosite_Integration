@@ -32,7 +32,7 @@ class Exosite {
      //set to true to log debug message on the ElectricImp server
      _debugMode             = false;
      //Number of milliseconds to timeout between config_io refreshes. 
-     _configIORefreshTimeout   = 1500000; 
+     _configIORefreshTimeout   = 15000000; 
 
      //Private variables
      _baseURL              = null;
@@ -58,8 +58,10 @@ class Exosite {
         _headers["Accept"] <- "application/x-www-form-urlencoded; charset=utf-8";
     }
 
-    //TODO
-    //Provision - 
+    //Provision - send a provision HTTP request
+    // Returns - Nothing (use callback)
+    // Parameters -
+    //           callBack: function - function to call with http response. This response will contain the Auth token on success
     function provision(callBack){
         _debug("Provisioning");
         _debug("headers: " + http.jsonencode(_headers));
@@ -104,6 +106,7 @@ class Exosite {
     // Returns: null
     // Parameters:
     //            config_io : string - the config_io to post formatted as "config_io=<config_io_value>"
+    //            token: string - CIK Authorization token for the device
     //
     // The config_io is the 'contract' between the device and ExoSense of how the data is going to be transmitted
     // See https://exosense.readme.io/docs/channel-configuration for more information
@@ -120,8 +123,11 @@ class Exosite {
     }
 
     // readAttribute - Fetches the given attribute from the Exosite server. 
-    // Returns: null
-    // Parameters: None
+    // Returns: None
+    // Parameters: 
+    //            attribute: string - name of the attribute to get
+    //            callback: function - callback for the http response from the get request
+    //            token: string - CIK Authorization token for the device
     function readAttribute(attribute, callBack, token) {
         local readAttributeHeaders = clone(_headers);
         readAttributeHeaders["X-Exosite-CIK"]  <-  token;
@@ -132,12 +138,18 @@ class Exosite {
         req.sendasync(callBack.bindenv(this));
     }
 
-    //TODO - Document
+    //setDebugMode - Turns on or off extra logging to the server, defaults to off/false
+    // Returns - None
+    // Parameters:
+    //          value: boolean - True = enable extra logging
     function setDebugMode(value) {
         _debugMode = value;
     }
 
-    //TODO - Document
+    //setConfigIORefreshTimeout - Changes the timeout length for a configIO long poll, defaults to 15000000 ms
+    // Returns - None
+    // Parameters:
+    //           val_milliseconds: integer - number of milliseconds before timing out the config_io long poll
     function setConfigIORefreshTimeout(val_milliseconds) {
         _configIORefreshTimeout = val_milliseconds;
     }
