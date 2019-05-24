@@ -45,7 +45,7 @@ class Exosite {
      // constructor
      // Returns: Nothing
      // Parameters:
-     //      mode (reqired) : string - The mode to run the library in, see README for more info on options.
+     //      mode (reqired) : emun (EXOSITE_MODES) - The mode to run the library in, see README for more info on options.
      //      settings (required) : table - The settings corresponding to the mode being run.
      //
     constructor(mode, settings) {
@@ -61,14 +61,14 @@ class Exosite {
     //Provision - send a provision HTTP request
     // Returns - Nothing (use callback)
     // Parameters -
-    //           callBack: function - function to call with http response. This response will contain the Auth token on success
-    function provision(callBack){
+    //           callback: function - function to call with http response. This response will contain the Auth token on success
+    function provision(callback){
         _debug("Provisioning");
         _debug("headers: " + http.jsonencode(_headers));
         local activate_url = format("%sprovision/activate", _baseURL);
         local data = format("id=%s", _deviceId);
         local req = http.post(activate_url, _headers, data);
-        req.sendasync(callBack);
+        req.sendasync(callback);
     }
 
     // writeData - Write a table to the "data_in" channel in the Exosite product
@@ -77,10 +77,11 @@ class Exosite {
     //      table (required) : string - The table to be written to "data_in".
     //                                 This table should conform to the config_io for the device.
     //                                 That is, each key should match a channel identifier and the value type should match the channel's data type.
+    //            token: string - CIK Authorization token for the device
     //
     // This is anticipated to be the function to call for device.on("reading.sent", <pointer_to_this_function>);
-    function writeData(table) {
-        _writeData_w_cb(table, _responseErrorCheck.bindenv(this));
+    function writeData(table, token) {
+        _writeData_w_cb(table, _responseErrorCheck.bindenv(this), token);
     }
 
     // pollConfigIO - Fetches the config_io from the Exosite server and writes it back. This is how the device acknowledges the config_io
@@ -128,14 +129,14 @@ class Exosite {
     //            attribute: string - name of the attribute to get
     //            callback: function - callback for the http response from the get request
     //            token: string - CIK Authorization token for the device
-    function readAttribute(attribute, callBack, token) {
+    function readAttribute(attribute, callback, token) {
         local readAttributeHeaders = clone(_headers);
         readAttributeHeaders["X-Exosite-CIK"]  <-  token;
         _debug("fetching attribute: " + attribute);
         _debug("headers: " + http.jsonencode(readAttributeHeaders));
 
         local req = http.get(format("%sonep:v1/stack/alias?%s", _baseURL, attribute), readAttributeHeaders);
-        req.sendasync(callBack.bindenv(this));
+        req.sendasync(callback.bindenv(this));
     }
 
     //setDebugMode - Turns on or off extra logging to the server, defaults to off/false
@@ -220,13 +221,15 @@ class Exosite {
     //      table (required) : string - The table to be written to "data_in".
     //                                 This table should conform to the config_io for the device.
     //                                 That is, each key should match a channel identifier and the value type should match the channel's data type.
-    //      callBack (required) : function - callBack function for the http write request
-    function _writeData_w_cb(table, callBack){
+    //      callback (required) : function - callback function for the http write request
+    function _writeData_w_cb(table, callback, token){
+        local writeDataHeaders = clone(_headers);
+        writeDataHeaders["X-Exosite-CIK"]  <-  token;
         _debug("writeData: " + http.jsonencode(table));
         _debug("headers: " + http.jsonencode(_headers));
 
         local req = http.post(format("%sonep:v1/stack/alias", _baseURL), _headers, "data_in=" + http.jsonencode(table));
-        req.sendasync(callBack.bindenv(this));
+        req.sendasync(callback.bindenv(this));
     }
 
     // pollConfigIOCallback - Callback for the pollConfigIO request
