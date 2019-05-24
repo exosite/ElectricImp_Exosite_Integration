@@ -28,14 +28,47 @@
 #require "Exosite.agent.lib.nut:1.0.0"
 
 const PRODUCT_ID = <my_product_id>;
+_token == null;
 
 local settings = {};
 settings.productId <- PRODUCT_ID;
 
-exositeAgent <- Exosite("MuranoProduct", settings);
-exositeAgent.provision();
+exositeAgent <- Exosite(EXOSITE_MODES.MURANO_PRODUCT, settings);
+
+//See if we think we need to provision (no token saved)
+local settings = server.load();
+if ("exosite_token" in settings) {
+    _token = settings.exosite_token;
+} else {
+    exositeAgent.provision(provision_callback);
+}
+
+//Poll for the configIO to get changes from the server
+exositeAgent.pollConfigIO();
 
 //Enable debugMode that was defaulted to false
-exositeAgent.debugMode = true;
+exositeAgent.setDebugMode(true);;
 
-device.on("reading.sent", exositeAgent.writeData.bindenv(exositeAgent));
+device.on("reading.sent", onDataRecieved);
+
+function provision_callback(response) {
+    if (response.statuscode == 200) {
+        _token = response.body;
+
+        local settings = server.load();
+        settings.exosite_token <- _token;
+        local result = server.save(settings);
+        if (result != 0) server.error("Could not save settings!");
+    } else if (response.statuscode == 409) {
+        server.log("Response error, may be trying to provision an already provisioned device");
+    } else {
+        server.log("Token not recieved. Error: " + response.statuscode);
+    }
+}
+
+function onDataRecieved(data) {
+    if (_token != null) exositeAgent.writeData(data, _token).bindenv(exositeAgent);
+}
+
+
+
