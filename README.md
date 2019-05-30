@@ -29,6 +29,7 @@ Provides an API wrapper for the data_in signal
   - ElectricImp ImpCentral account [(Sign up here)](https://impcentral.electricimp.com/login)
   - Exosite Murano account [(Sign up here)](https://info.exosite.com/platform-sign-up)
   - Exosite Murano product has WebServices (Exchange Element) enabled.  [(Learn more about exchange elements here)](http://docs.exosite.com/reference/ui/exchange/adding-exchange-elements-guide/)
+  - Exosite Murano product has "config_io" and "data_in" defined in 'resources'.
 
 ## General Usage
 The main things to implement when using this library are: 
