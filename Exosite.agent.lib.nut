@@ -254,18 +254,12 @@ class Exosite {
         }else if (response.statuscode == 304) {
             _debug("config_io not modified, not writing back");
         } else {
-            server.log ("Error in _pollConfigIOCallback, ResponseCode: " + response.statuscode + response.body);
+            server.error ("Error in _pollConfigIOCallback, ResponseCode: " + response.statuscode + response.body);
+            //Return and stop the loop
+            return;
         }
 
-        //Use wakeup to break up the call stack. This could possibly create a stack overflow if we just kept calling pollConfigIO directly
-        //429 - too many requests...something wrong is happening and we're calling repeatedly, sleep to counteract this...but it's wrong
-        //401 - Unauthorized, may be in the process of provisioning, wait a minute
-        if (response.statuscode == 429 || response.statuscode == 401) {
-            server.log("Error: config_io responded with code: " + response.statuscode + ". Waiting one minute and trying again");
-            imp.wakeup(60, _configIOLoop.bindenv(this));
-        } else {
-            imp.wakeup(0.0, _configIOLoop.bindenv(this));
-        }
+        imp.wakeup(0.0, _configIOLoop.bindenv(this));
     }
 
     // responseErrorCheck - Checks the status code of an http response and prints to the server log

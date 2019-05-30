@@ -25,6 +25,11 @@ Provides an API wrapper for the data_in signal
 - [x] Write Data
 - [x] Acknowledge config_io write
 
+## Prerequisites
+  - ElectricImp ImpCentral account [(Sign up here)](https://impcentral.electricimp.com/login)
+  - Exosite Murano account [(Sign up here)](https://info.exosite.com/platform-sign-up)
+  - Exosite Murano product has WebServices (Exchange Element) enabled.  [(Learn more about exchange elements here)](http://docs.exosite.com/reference/ui/exchange/adding-exchange-elements-guide/)
+
 ## General Usage
 The main things to implement when using this library are: 
   - **Token Handling** A token is recieved when [provisioning](#provisioncallback) in a callback, or set directly in Murano. This must persist across device restarts.
@@ -32,6 +37,7 @@ The main things to implement when using this library are:
   - **Writing Data** [Writing data](#writedatatable-token) should be formatted to match the config_io given to ExoSense.
 
 For a more complete example of usage, see Example/example.agent.nut and Example/example.device.nut
+
 
 ## Available Functions
 ### Constructor Exosite(*mode, settings*) ###
