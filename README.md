@@ -96,7 +96,7 @@ Writes the given config_io to the server. This will not need to be used directly
 | token | string | yes | CIK Authorization token for the device | 
 
 ### readAttribute(*attribute*, *callback*, *token*) ###
-Writes the given config_io to the server. This will not need to be used directly if the config_io is updated from the cloud.
+Sends a read request to the server for the given attribute.
 
 | Parameter | Type | Required | Description |
 | -- | -- | -- | -- |
