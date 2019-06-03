@@ -27,7 +27,7 @@
 
 #require "Exosite.agent.lib.nut:1.0.0"
 
-const PRODUCT_ID = <my_product_id>;
+const PRODUCT_ID = "<my_product_id>";
 local _token = null;
 
 function provision_callback(response) {
