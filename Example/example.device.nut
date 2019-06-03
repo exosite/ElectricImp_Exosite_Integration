@@ -53,9 +53,7 @@ function takeReading(){
   flashLed();
 
   // Set the imp to sleep when idle, ie. program complete
-  imp.onidle(function() {
-    server.sleepfor(SLEEP_TIME);
-  });
+  imp.wakeup(SLEEP_TIME, takeReading);
 }
 
 function flashLed() {
@@ -82,11 +80,6 @@ spi.configure(MSB_FIRST, 7500);
 hardware.pin1.configure(DIGITAL_OUT, 1);
 led <- WS2812(spi, 1);
 
-// Take a reading
-local counter = 0;
-while (true) {
-    takeReading();
-    counter = counter+1;
-    imp.sleep(SLEEP_TIME);
-}
+// Start Reading Loop
+takeReading();
 
