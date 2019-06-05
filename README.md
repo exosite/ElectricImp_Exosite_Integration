@@ -206,4 +206,4 @@ If you are receiving 401 Unauthorized error responses, the auth token may be out
 
 ## License ##
 
-This library is licensed under the terms of the [MIT License](./LICENSE) and is copyright (c) 2019 Exosite.
+This library is licensed under the terms of the [MIT License](./LICENSE.txt) and is copyright (c) 2019 Exosite.
