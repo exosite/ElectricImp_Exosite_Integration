@@ -36,7 +36,7 @@ This library provides integration with [Exosite](https://exosite.com/iot-solutio
 - An Electric Imp account: [sign up here](https://impcentral.electricimp.com/login).
 - An Exosite Murano account: [sign up here](https://info.exosite.com/platform-sign-up).
 - An Exosite Murano product which has WebServices (ie. [Exchange Elements](http://docs.exosite.com/reference/ui/exchange/adding-exchange-elements-guide/)) enabled.
-- An Exosite Murano product whihc has `config_io` and `data_in` defined in `resources`.
+- An Exosite Murano product which has `config_io` and `data_in` defined in `resources`.
 
 ## General Library Usage ##
 
@@ -44,9 +44,9 @@ The main things to implement when using this library are:
 
 - **Token Handling** A token is received when [provisioning](#provisioncallback) in a callback, or set directly in Murano. This token must persist across device restarts.
 - **config_io** The `config_io` signal defines the type of data that will be transmitted to ExoSense. This can either be set from the device or from the cloud. For more information on `config_io`, please see the [ExoSense documentation on channel configuration](https://exosense.readme.io/docs/channel-configuration).
-- **Writing Data** Data to be [written](#writedatatable-token) should first be formatted to match the `config_io` given to ExoSense.
+- **Writing Data** Data to be [written](#writedatadata-token) should first be formatted to match the `config_io` given to ExoSense.
 
-For a more complete example of the library's usage, please see the [Example](Example) directory, which contains sample agent and device code, and en example `config_io` file.
+For a more complete example of the library's usage, please see the [Example](./Example) directory, which contains sample agent and device code, and en example `config_io` file.
 
 ## Library Methods ##
 
@@ -206,4 +206,4 @@ If you are receiving 401 Unauthorized error responses, the auth token may be out
 
 ## License ##
 
-This library is licensed under the terms of the [MIT License](LICENSE) and is copyright (c) 2019 Exosite.
+This library is licensed under the terms of the [MIT License](./LICENSE) and is copyright (c) 2019 Exosite.
