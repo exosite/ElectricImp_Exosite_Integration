@@ -22,7 +22,7 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-// example.device.nu
+// example.device.nut
 // This is example code for the device intended to be used with the impExplorer Development Kit
 
 #require "HTS221.device.lib.nut:2.0.1"
@@ -30,7 +30,7 @@
 #require "WS2812.class.nut:3.0.0"
 
 // Define constants
-const SLEEP_TIME = 10;
+const READING_INTERVAL = 10;
 
 // Declare Global Variables
 tempSensor <- null;
@@ -38,13 +38,19 @@ pressureSensor <- null;
 led <- null
 
 // Define functions
+function flashLed() {
+  led.set(0, [0,0,128]).draw();
+  imp.sleep(0.5);
+  led.set(0, [0,0,0]).draw();
+}
+
 function takeReading(){
   local conditions = {};
   local reading = tempSensor.read();
-  conditions.temp <- reading.temperature;
-  conditions.humid <- reading.humidity;
+  if ("temperature" in reading) conditions.temp <- reading.temperature;
+  if ("humidity" in reading) conditions.humid <- reading.humidity;
   reading = pressureSensor.read();
-  conditions.press <- reading.pressure;
+  if ("pressure" in reading) conditions.press <- reading.pressure;
  
   // Send 'conditions' to the agent
   agent.send("reading.sent", conditions);
@@ -52,16 +58,10 @@ function takeReading(){
   // Flash the LED
   flashLed();
 
-  // Set the imp to sleep when idle, ie. program complete
-  imp.onidle(function() {
-    server.sleepfor(SLEEP_TIME);
+  // Schedule next reading
+  imp.wakeup(READING_INTERVAL, function() {
+    takeReading();
   });
-}
-
-function flashLed() {
-  led.set(0, [0,0,128]).draw();
-  imp.sleep(0.5);
-  led.set(0, [0,0,0]).draw();
 }
 
 // Start of program
@@ -82,11 +82,5 @@ spi.configure(MSB_FIRST, 7500);
 hardware.pin1.configure(DIGITAL_OUT, 1);
 led <- WS2812(spi, 1);
 
-// Take a reading
-local counter = 0;
-while (true) {
-    takeReading();
-    counter = counter+1;
-    imp.sleep(SLEEP_TIME);
-}
-
+// Start reading loop
+takeReading();
