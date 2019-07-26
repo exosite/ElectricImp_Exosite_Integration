@@ -18,7 +18,7 @@ This library provides integration with [Exosite](https://exosite.com/iot-solutio
     * [readAttribute(<em>attribute, callback, token</em>)](#readattributeattribute-callback-token)
     * [setDebugMode(<em>value</em>)](#setdebugmodevalue)
     * [setConfigIORefreshTimeout(<em>timeout</em>)](#setconfigiorefreshtimeouttimeout)
-* [Configuring Channels In ExoSense](#configuringchannelsinexosense)
+* [Configuring Channels In ExoSense](#configuring-channels-in-exosense)
 * [Modes](#modes)
     * [MuranoProduct](#muranoproduct)
 * [Troubleshooting](#troubleshooting)
