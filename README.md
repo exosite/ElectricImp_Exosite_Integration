@@ -188,7 +188,7 @@ agent.send("reading.sent", conditions);
 
 A corresponding channel configuration could look like the following:
 
-![] ../media/ChannelConfigurationExample.png
+![](../media/ChannelConfigurationExample.png)
 
 
 ## Modes ##
