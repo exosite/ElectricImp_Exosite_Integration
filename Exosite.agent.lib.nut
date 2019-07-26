@@ -226,6 +226,8 @@ class Exosite {
         foreach (key, channel in config_table.channels) {
             if ("protocol_config" in channel
                 && "app_specific_config" in channel.protocol_config
+                && "application" in channel.protocol_config
+                && channel.protocol_config.application == "ElectricImp"
                 && "key" in channel.protocol_config.app_specific_config) {
                 local local_key = channel.protocol_config.app_specific_config.key;
                 return_table[local_key] <- key;

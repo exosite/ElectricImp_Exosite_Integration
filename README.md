@@ -18,6 +18,7 @@ This library provides integration with [Exosite](https://exosite.com/iot-solutio
     * [readAttribute(<em>attribute, callback, token</em>)](#readattributeattribute-callback-token)
     * [setDebugMode(<em>value</em>)](#setdebugmodevalue)
     * [setConfigIORefreshTimeout(<em>timeout</em>)](#setconfigiorefreshtimeouttimeout)
+* [Configuring Channels In ExoSense](#configuringchannelsinexosense)
 * [Modes](#modes)
     * [MuranoProduct](#muranoproduct)
 * [Troubleshooting](#troubleshooting)
@@ -172,6 +173,23 @@ Changes the timeout length for a configIO long poll, defaults to 15000000 ms
 #### Returns ####
 
 Nothing.
+
+## Configuring Channels In ExoSense ##
+To configure the channels in ExoSense to read correctly from the device. The key that the device uses for the data needs to be defined.
+
+To achieve this, the user must have a "Custom" Protocol, with "ElectricImp" as the Application, and `{"key":<device's corresponding key>}`
+
+For example, if the device calls
+```
+local conditions = {};
+conditions.temp <- reading.temperature;
+agent.send("reading.sent", conditions);
+```
+
+A corresponding channel configuration could look like the following:
+
+![] ../media/ChannelConfigurationExample.png
+
 
 ## Modes ##
 
