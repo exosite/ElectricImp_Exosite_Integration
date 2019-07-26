@@ -98,6 +98,31 @@ class MuranoTestCase extends ImpTestCase {
        this.assertEqual(agent._deviceId, agent._getDeviceFromURL(http.agenturl()));
     }
 
+    function test07_testCreateChannelConverterTable(){
+       local agent = Exosite(EXOSITE_MODES.MURANO_PRODUCT, default_test_settings); 
+
+       local config_io = "{\"channels\": { \"000\":{}, \"001\": { \"display_name\": \"Temp_F\", \"protocol_config\": { \"app_specific_config\": { \"key\": \"myGreatKey\" }, \"application\": \"ElectricImp\" }}}}"; 
+       local expected_table = {"myGreatKey":"001"};
+       local returned_table = agent._create_channel_converter_table(config_io);
+
+        //JSON Encode since assertEqual is checking reference for the tables
+        this.assertEqual(http.jsonencode(returned_table), http.jsonencode(expected_table))
+    }
+
+    function test08_testDataInTransform(){
+       local agent = Exosite(EXOSITE_MODES.MURANO_PRODUCT, default_test_settings); 
+       //(As proven from test07)
+       local id_conversion_table = {"myGreatKey":"001"};
+       
+       local data_in_table = {"myGreatKey" : 42, "keyNotInConfigIO": 77}
+       local expected_table = {"001" : 42, "keyNotInConfigIO": 77}
+
+       local converted_table = agent._match_with_config_io(data_in_table, id_conversion_table);
+
+        //JSON Encode since assertEqual is checking reference for the tables
+       this.assertEqual(http.jsonencode(data_in_table), http.jsonencode(expected_table));
+    }
+
     function provision_test() {
         return Promise(function(resolve, reject) {
             _exositeAgent.provision(function(response){
