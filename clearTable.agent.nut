@@ -1,5 +1,3 @@
-
-
 //Use this agent to clear the token from the server table.
 // This can be used to help re-provision a device if the authentication gets out of sync
 

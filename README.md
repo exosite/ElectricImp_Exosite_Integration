@@ -1,130 +1,209 @@
-# Exosite
+# Exosite #
+
 This library provides integration with [Exosite](https://exosite.com/iot-solutions/condition-monitoring/) by wrapping the [Exosite HTTPS Device API](http://docs.exosite.com/reference/products/device-api/http/).
 
-**To use this library, add** `#require "Exosite.agent.lib.nut:1.0.0"` **to the top of your agent code.**
+**To include this library in your project, add** `#require "Exosite.agent.lib.nut:1.0.0"` **at the top of your agent code**
 
-  * [What this does](#what-this-does)
-  * [General Usage](#general-usage)
-     * [On the device](#on-the-device)
-     * [In the agent](#in-the-agent)
-  * [Variable Settings](#variable-settings)
-     * [debugMode](#debugmode)
-     * [configIORefreshTime](#configiorefreshtime)
-  * [Available Functions](#available-functions)
-     * [Constructor Exosite(<em>mode, settings</em>)](#constructor-exositemode-settings)
-     * [provision()](#provision)
-     * [writeData(<em>table</em>)](#writedatatable)
-  * [Modes](#modes)
-     * [MuranoProduct](#muranoproduct)
+## Contents ##
 
-## What this does
-Provides an API wrapper to create/provision a device\
-Provides an API wrapper for the data_in signal
-- [x] Provision (via token auth)
-- [x] Write Data
-- [x] Acknowledge config_io write
+* [What This Library Does](#what-this-library-does)
+* [Pre-requisites](#pre-requisites)
+* [General Library Usage](#general-library-usage)
+* [Library Methods](#library-methods)
+    * [Constructor: Exosite(<em>mode, settings</em>)](#constructor-exositemode-settings)
+    * [provision(<em>callback</em>)](#provisioncallback)
+    * [writeData(<em>data, token</em>)](#writedatadata-token)
+    * [pollConfigIO(<em>token</em>)](#pollconfigiotoken)
+    * [writeConfigIO(<em>config_io, token</em>)](#writeconfigioconfig_io-token)
+    * [readAttribute(<em>attribute, callback, token</em>)](#readattributeattribute-callback-token)
+    * [setDebugMode(<em>value</em>)](#setdebugmodevalue)
+    * [setConfigIORefreshTimeout(<em>timeout</em>)](#setconfigiorefreshtimeouttimeout)
+* [Modes](#modes)
+    * [MuranoProduct](#muranoproduct)
+* [Troubleshooting](#troubleshooting)
+    * [Authorization Issues](#authorization-issues)
 
-## General Usage
-The following is general pseudo-code usage. \
-For a more complete example of usage, see Example/example.agent.nut and Example/example.device.nut
+## What This Library Does ##
 
-### On the device
-```
-data.var1 <- getVar1();
-data.var2 <- getVar2();
+- Provides an API wrapper to create/provision a device.
+- Provides an API wrapper for the `data_in` signal.
+- Provision device (via token auth).
+- Write data.
+- Acknowledge `config_io` write.
 
-agent.send(“reading.sent”, data);
-```
+## Pre-requisites ##
 
-### In the agent
-```
-#require "Exosite.agent.lib.nut:1.0.0"
+- An Electric Imp account: [sign up here](https://impcentral.electricimp.com/login).
+- An Exosite Murano account: [sign up here](https://info.exosite.com/platform-sign-up).
+- An Exosite Murano product which has WebServices (ie. [Exchange Elements](http://docs.exosite.com/reference/ui/exchange/adding-exchange-elements-guide/)) enabled.
+- An Exosite Murano product which has `config_io` and `data_in` defined in `resources`.
 
-const PRODUCT_ID = <my_product_id>;
+## General Library Usage ##
+
+The main things to implement when using this library are:
+
+- **Token Handling** A token is received when [provisioning](#provisioncallback) in a callback, or set directly in Murano. This token must persist across device restarts.
+- **config_io** The `config_io` signal defines the type of data that will be transmitted to ExoSense. This can either be set from the device or from the cloud. For more information on `config_io`, please see the [ExoSense documentation on channel configuration](https://exosense.readme.io/docs/channel-configuration).
+- **Writing Data** Data to be [written](#writedatadata-token) should first be formatted to match the `config_io` given to ExoSense.
+
+For a more complete example of the library's usage, please see the [Example](./Example) directory, which contains sample agent and device code, and en example `config_io` file.
+
+## Library Methods ##
+
+### Constructor: Exosite(*mode, settings*) ###
+
+| Parameter | Type | Required? | Description |
+| -- | -- | -- | -- |
+| *mode* | Enum | Yes | The mode in which to execute the library. The available modes [are listed below.](#modes) |
+| *settings* | Table | Yes | A table of settings for the selected mode |
+
+#### Example ####
+
+```squirrel
+const PRODUCT_ID = <MY_PRODUCT_ID>;
 local settings = {};
 settings.productId <- PRODUCT_ID;
 
-exositeAgent <- Exosite("MuranoProduct", settings);
-exositeAgent.provision();
-
-device.on("reading.sent", exositeAgent.writeData.bindenv(exositeAgent));
+exositeAgent <- Exosite(EXOSITE_MODES.MURANO_PRODUCT, settings);
 ```
 
-## Variable Settings
-Some variables can be changed in the class instance of an Exosite agent. These variables and their effects are listed below.
+### provision(*callback*) ###
 
-### debugMode
-Debug mode logs additional messages to the ElectricImp server for added debugging. \
-The debug mode is off (false) by default, and can be enabled by setting `debugMode` to true.
-```
-exositeAgent.debugMode = true;
-```
+This method provisions the device with ExoSense using the information provided in the constructor.
 
-### configIORefreshTime
-`configIORefreshTime` is the length (in milliseconds) of the long poll timeout between checking for a new config\_io. \
-`configIORefreshTime` defaults to 1500000. User beware, having this too low will cause a 429 error, and cascade issues.
+A successful request will contain the CIK Auth token in *response.body*. You will need this value in order to write data and perform other tasks.
 
-```
-exositeAgent.debugMode = 1500000;
-```
+#### Parameters ####
 
-## Available Functions
-### Constructor Exosite(*mode, settings*) ###
+| Parameter | Type | Required? | Description |
+| -- | -- | -- | -- |
+| *callback* | Function | Yes | A function to be executed to handle the read request's response |
+
+#### Returns ####
+
+Nothing.
+
+### writeData(*data, token*) ###
+
+This method writes a table of data to the `data_in` signal in Murano.
+
+For more information on `data_in` and `config_io`, please see the [ExoSense documentation on channel configuration](https://exosense.readme.io/docs/channel-configuration).
+
+#### Parameters ####
+
+| Parameter | Type | Required? | Description |
+| -- | -- | -- | -- |
+| *data* | Table | Yes | The data to be written to `data_in`. Each key should match a channel identifier in your `config_io` |
+| *token* | String | Yes | The device's CIK Authorization token |
+
+#### Returns ####
+
+Nothing.
+
+### pollConfigIO(*token*) ###
+
+This method uses long polling to check for updates to the `config_io`. This should be used if the `config_io` could be set from the cloud.
+
+#### Parameters ####
+
+| Parameter | Type | Required? | Description |
+| -- | -- | -- | -- |
+| *token* | String | Yes | The device's CIK Authorization token |
+
+#### Returns ####
+
+Nothing.
+
+### writeConfigIO(*config_io, token*) ###
+
+This method writes the given `config_io` to the server. This will not need to be used directly if the `config_io` is updated from the cloud.
+
+#### Parameters ####
+
+| Parameter | Type | Required? | Description |
+| -- | -- | -- | -- |
+| *config_io* | String | Yes | The `config_io` to post formatted as `"config_io=<jsonencoded_config_io_table>"` |
+| *token* | String | Yes | The device's CIK Authorization token |
+
+#### Returns ####
+
+Nothing.
+
+### readAttribute(*attribute, callback, token*) ###
+
+This method requests the value of the specified attribute.
+
+#### Parameters ####
+
+| Parameter | Type | Required? | Description |
+| -- | -- | -- | -- |
+| *attribute* | String | Yes | The attribute whose value is to be read |
+| *callback* | Function | Yes | A function to be executed to handle the read request's response |
+| *token* | String | Yes | The device's CIK Authorization token |
+
+#### Returns ####
+
+Nothing &mdash; the attribute's value is accessed via the registered callback.
+
+### setDebugMode(*value*) ###
+
+Debug mode enables extra logging in the impCentral™ log.
+
+#### Parameters ####
+
+| Parameter | Type | Required? | Description |
+| -- | -- | -- | -- |
+| *value* | Boolean | Yes | Set to `true` to enable extra debugging information, or `false` to silence the extra logging |
+
+#### Returns ####
+
+Nothing.
+
+### setConfigIORefreshTimeout(*timeout*) ###
+
+Changes the timeout length for a configIO long poll, defaults to 15000000 ms
+
+#### Parameters ####
+
 | Parameter | Type | Required | Description |
 | -- | -- | -- | -- |
-| mode | string | yes | The mode to execute the library in. [Descriptions of modes are listed below.](#modes).
-| settings | table | yes | A table of settings for the corresponding mode selected.
+| *timeout* | Integer | Yes | The time in milliseconds (ms) before the long poll times out and re-requests |
 
-**Returns** \
-Nothing
+#### Returns ####
 
-**Example**
-```
-const PRODUCT_ID = <my_product_id>;
-local settings = {};
-settings.productId <- PRODUCT_ID;
-
-exositeAgent <- Exosite("MuranoProduct", settings);
-```
-
-### provision() ###
-Provisions the device with ExoSense using the information provided in the constructor.
-
-**Returns** \
-Nothing
-
-### writeData(*table*) ###
-| Parameter | Type | Required | Description |
-| -- | -- | -- | -- |
-| table | table object | yes | Table to be written to data\_in. Each key should match a channel identifier in the config\_io |
-
-For more information on data_in and config_io, checkout the [ExoSense Documentation on Channel Configuration](https://exosense.readme.io/docs/channel-configuration)
-
-**Example Usage**
-```
-device.on("reading.sent", exositeAgent.writeData.bindenv(exositeAgent));
-```
+Nothing.
 
 ## Modes ##
-There are different modes that can be used with this library. Supported/Released modes are described below.
+
+This library supports the following usage modes.
+
 ### MuranoProduct ###
-**Usage** \
-The `"MuranoProduct"` mode should be selected when a user has their own Murano Product to add their device to.
 
-**Settings**
+The `EXOSITE_MODES.MURANO_PRODUCT` mode should be selected when a user has their own Murano Product to add their device to.
 
-| Parameter | Type | Required | Description |
+#### Settings ####
+
+| Key | Type | Required? | Description |
 | -- | -- | -- | -- |
-| productId | string | yes | The Murano Product ID to connect and send data to | 
-| deviceId  | string | no  | The Device ID to provision as. If not provided, the Electric Imp agent ID will be used. This must be unique between devices in the product. |
+| *productId* | String | Yes | The Murano Product ID to connect and send data to |
+| *deviceId*  | String | No  | The Device ID to provision as. If not provided, the Electric Imp agent ID will be used. This must be unique between devices in the product |
 
-**Example Settings**
+#### Example Settings ####
 
-```
+```squirrel
 local settings = {};
 settings.productId = "c449gfcd11ky00002";
 settings.deviceId  = "device0001";
 ```
 
+## Troubleshooting ##
 
+To assist in troubleshooting, please ensure that [Debug Mode](#setdebugmodevalue) is enabled. The debug log will viewable be in impCentral.
 
+### Authorization Issues ###
+
+If you are receiving 401 Unauthorized error responses, the auth token may be out of sync with the Exosite Product. To deal with this issue, clear the saved token in the agent, clear the credentials in the Murano device, and re-provision the device.
+
+## License ##
+
+This library is licensed under the terms of the [MIT License](./LICENSE.txt) and is copyright (c) 2019 Exosite.
