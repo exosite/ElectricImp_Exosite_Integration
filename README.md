@@ -177,7 +177,7 @@ Nothing.
 ## Configuring Channels In ExoSense ##
 To configure the channels in ExoSense to read correctly from the device. The key that the device uses for the data needs to be defined.
 
-To achieve this, the user must have a "Custom" Protocol, with "ElectricImp" as the Application, and `{"key":<device's corresponding key>}`
+To achieve this, the user must have a `Custom` **Protocol**, with `ElectricImp` as the **Application**, and `{"key":<device's corresponding key>}` as the **app_specific_config**
 
 For example, if the device calls
 ```
@@ -188,7 +188,7 @@ agent.send("reading.sent", conditions);
 
 A corresponding channel configuration could look like the following:
 
-![](../media/ChannelConfigurationExample.png)
+![](media/ChannelConfigurationExample.png)
 
 
 ## Modes ##
