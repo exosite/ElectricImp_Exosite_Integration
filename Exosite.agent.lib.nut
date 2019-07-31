@@ -113,10 +113,13 @@ class Exosite {
         local configIOHeaders = clone(_headers);
         configIOHeaders["X-Exosite-CIK"]  <-  token;
 
-        server.log("writeConfigIO: " + config_io);
+        // decode/encode combo turns the \" -> " within the config_io to make it correct
+        _configIO = http.jsondecode(http.jsonencode(http.urldecode(config_io).config_io));
+
+        server.log("writeConfigIO: " + _configIO);
         _debug("headers: " + http.jsonencode(configIOHeaders));
 
-        _configIO = config_io;
+        server.log("Actual Input: " + _configIO);
         _idConversionTable  = _create_channel_converter_table(_configIO);
         local req = http.post(format("%sonep:v1/stack/alias", _baseURL), configIOHeaders, _configIO);
         req.sendasync(_responseErrorCheck.bindenv(this));
@@ -223,6 +226,7 @@ class Exosite {
     function  _create_channel_converter_table(configIOString) {
         local return_table = {}
         local config_table = http.jsondecode(configIOString);
+        server.log(http.jsonencode(config_table));
         foreach (key, channel in config_table.channels) {
             if ("protocol_config" in channel
                 && "app_specific_config" in channel.protocol_config
@@ -334,3 +338,44 @@ class Exosite {
 }
 
 
+//const PRODUCT_ID = <my_product_id>;
+local _token = null;
+
+function provision_callback(response) {
+    if (response.statuscode == 200) {
+        _token = response.body;
+
+        local settings = server.load();
+        settings.exosite_token <- _token;
+        local result = server.save(settings);
+        if (result != 0) server.error("Could not save settings!");
+    } else if (response.statuscode == 409) {
+        server.log("Response error, may be trying to provision an already provisioned device");
+    } else {
+        server.log("Token not recieved. Error: " + response.statuscode);
+    }
+
+    exositeAgent.pollConfigIO(_token);
+}
+
+function onDataRecieved(data) {
+    if (_token != null) exositeAgent.writeData(data, _token);
+}
+
+local settings = {};
+settings.productId <- "c449gfcd11ky00000";
+
+exositeAgent <- Exosite(EXOSITE_MODES.MURANO_PRODUCT, settings);
+//Enable debugMode that was defaulted to false
+exositeAgent.setDebugMode(true);
+
+//See if we think we need to provision (no token saved)
+local settings = server.load();
+if ("exosite_token" in settings) {
+    _token = settings.exosite_token;
+    exositeAgent.pollConfigIO(_token);
+} else {
+    exositeAgent.provision(provision_callback.bindenv(this));
+}
+
+device.on("reading.sent", onDataRecieved.bindenv(this));
