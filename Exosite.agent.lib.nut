@@ -24,10 +24,11 @@
 
 enum EXOSITE_MODES {
     MURANO_PRODUCT = "EXOSITE_MODE_MURANO_PRODUCT"
+    PDAAS_PRODUCT = "EXOSITE_MODE_PDAAS_PRODUCT"
 }
 
 class Exosite {
-      static PDAAS_PRODUCT_ID = "c5nmke836k280000";
+      static PDAAS_PRODUCT_ID = "e3yjz9seyegq00000";
       static VERSION = "1.0.0";
 
      //set to true to log debug message on the ElectricImp server
@@ -52,12 +53,8 @@ class Exosite {
      //      settings (required) : table - The settings corresponding to the mode being run.
      //
     constructor(mode, settings) {
-        if (!_isValidMode(mode)) {
-            server.error(format("Exosite Library Mode: %s not supported", mode));
-        }
-
         _mode = mode;
-        _productId = getProductId(mode, settings);
+        _productId = _getProductId(mode, settings);
 
         _baseURL = format("https://%s.m2.exosite.io/", _productId);
         _deviceId = (_tableGet(settings, "deviceId") == null) ?  _getDeviceFromURL(http.agenturl()) : settings.deviceId;
@@ -187,25 +184,15 @@ class Exosite {
                     server.error("Mode MuranoProduct requires a productId in settings");
                 }
                 break;
+            case EXOSITE_MODES.PDAAS_PRODUCT:
+                productId = PDAAS_PRODUCT_ID;
+                break;
             default:
                 server.error("No product ID found");
         }
 
         return productId;
     }
-
-    // Private function to check if the given mode is known/supported
-    // returns boolean - True if mode found
-    // Parameter:
-    //           mode: string - mode identifier
-    function _isValidMode(mode) {
-        if (mode == "MuranoProduct"
-             || mode == "PDaaSProduct") {
-            return true;
-        }
-        return false;
-    }
-
 
     //Private Helper function to get unique ID from each device
     // Returns: ElectricImps AgentID (Unique per device)
@@ -231,9 +218,9 @@ class Exosite {
     // Returns: Nothing
     // Parameters: None
     //
-    function provision() {
-        provision_w_cb(setTokenAndGetClaimCode.bindenv(this));
-    }
+    //function provision() {
+    //    provision_w_cb(setTokenAndGetClaimCode.bindenv(this));
+    //}
 
     // Private Function - provisions a device with a custom callback
     // this is here to assist in testing, otherwise we would just have the provision() function
@@ -243,8 +230,8 @@ class Exosite {
         //   getClaimCode();
         //   return;
         //}
-        debug("Provisioning");
-        debug("headers: " + http.jsonencode(_headers));
+        _debug("Provisioning");
+        _debug("headers: " + http.jsonencode(_headers));
         local activate_url = format("%sprovision/activate", _baseURL);
         local data = format("id=%s", _deviceId);
         local req = http.post(activate_url, _headers, data);
@@ -282,17 +269,17 @@ class Exosite {
 //    }
 
 
-    // writeData - Write a table to the "data_in" channel in the Exosite product
-    // Returns: Nothing
-    // Parameters: 
-    //      table (required) : string - The table to be written to "data_in".
-    //                                 This table should conform to the config_io for the device.
-    //                                 That is, each key should match a channel identifier and the value type should match the channel's data type.
-    //
-    // This is anticipated to be the function to call for device.on("reading.sent", <pointer_to_this_function>);
-    function writeData(table) {
-        writeData_w_cb(table, responseErrorCheck.bindenv(this));
-    }
+//    // writeData - Write a table to the "data_in" channel in the Exosite product
+//    // Returns: Nothing
+//    // Parameters: 
+//    //      table (required) : string - The table to be written to "data_in".
+//    //                                 This table should conform to the config_io for the device.
+//    //                                 That is, each key should match a channel identifier and the value type should match the channel's data type.
+//    //
+//    // This is anticipated to be the function to call for device.on("reading.sent", <pointer_to_this_function>);
+//    function writeData(table) {
+//        _writeData_w_cb(table, _responseErrorCheck.bindenv(this));
+//    }
 
     //Private Function
     // this is here to assist in testing, otherwise we would just have the writeData() function
@@ -309,6 +296,19 @@ class Exosite {
         _debug("headers: " + http.jsonencode(_headers));
 
         local req = http.post(format("%sonep:v1/stack/alias", _baseURL), writeDataHeaders, "data_in=" + http.jsonencode(table));
+        req.sendasync(callback.bindenv(this));
+    }
+
+    function _get_claim_code_w_cb(callback) {
+        // This is only valid in Product as a Service
+        if (_mode != EXOSITE_MODES.PDAAS_PRODUCT) {
+            server.log("Attempting to get a claim code with invalid mode");
+            return;
+        }
+
+        server.log("Requesting Claim code for: " + _deviceId);
+        local url = format("https://%s.apps.exosite.io/api/devices/%s/reset", PDAAS_PRODUCT_ID, _deviceId);
+        local req = http.get(url, _headers);
         req.sendasync(callback.bindenv(this));
     }
 
@@ -357,21 +357,21 @@ class Exosite {
     // The config_io is the 'contract' between the device and ExoSense of how the data is going to be transmitted
     // See https://exosense.readme.io/docs/channel-configuration for more information
     function writeConfigIO(config_io){
-        debug("writeConfigIO: " + config_io);
-        debug("headers: " + http.jsonencode(_headers));
+        _debug("writeConfigIO: " + config_io);
+        _debug("headers: " + http.jsonencode(_headers));
 
         _configIO = config_io;
         local req = http.post(format("%sonep:v1/stack/alias", _baseURL), _headers, _configIO);
-        req.sendasync(responseErrorCheck.bindenv(this));
+        req.sendasync(_responseErrorCheck.bindenv(this));
     }
 
     // readAttribute - Fetches the given attribute from the Exosite server. 
     // Returns: null
     // Parameters: None
-    function readAttribute(attribute, callBack) {
-        _headers["X-Exosite-CIK"]  <-  _token;
-        debug("fetching attribute: " + attribute);
-        debug("headers: " + http.jsonencode(_headers));
+    function readAttribute(attribute, callBack, token) {
+        _headers["X-Exosite-CIK"]  <-  token;
+        _debug("fetching attribute: " + attribute);
+        _debug("headers: " + http.jsonencode(_headers));
 
         local req = http.get(format("%sonep:v1/stack/alias?%s", _baseURL, attribute), _headers);
         req.sendasync(callBack.bindenv(this));
@@ -401,13 +401,7 @@ class Exosite {
     //
     //  Returns: string - Claim code
     function getClaimCode() {
-        // This is only valid in Product as a Service
-        if (mode != "PDaaSProduct") return;
-
-        server.log("Requesting Claim code for: " + _deviceId);
-        local url = format("https://%s.apps.exosite.io/api/devices/%s/reset", PDAAS_PRODUCT_ID, _deviceId);
-        local req = http.get(url, _headers);
-        req.sendasync(getClaimCode_Callback.bindenv(this));
+        _get_claim_code_w_cb(getClaimCode_Callback);
     }
 
     function getClaimCode_Callback(response){
@@ -425,19 +419,52 @@ class Exosite {
 // Limitations of ElectricImp require this all to be in the same file.
 //*********************************************************
 //BEGIN LOCAL AGENT CODE
-    const PRODUCT_ID = "f578ej9ehrcc00000";
+local _token = null;
+
+function provision_callback(response) {
+    if (response.statuscode == 200) {
+        _token = response.body;
+
+        local settings = server.load();
+        settings.exosite_token <- _token;
+        local result = server.save(settings);
+        if (result != 0) server.error("Could not save settings!");
+    } else if (response.statuscode == 409) {
+        server.log("Response error, may be trying to provision an already provisioned device");
+    } else {
+        server.log("Token not recieved. Error: " + response.statuscode);
+    }
+
+    exositeAgent.pollConfigIO(_token);
+}
+
+function onDataRecieved(data) {
+    if (_token != null) exositeAgent.writeData(data, _token);
+}
+    //const PRODUCT_ID = "f578ej9ehrcc00000";
 
     local settings = {};
-    settings.productId <- PRODUCT_ID;
+    //settings.productId <- PRODUCT_ID;
 
 //    exositeAgent <- Exosite("MuranoProduct", settings);
-    exositeAgent <- Exosite("PDaaSProduct", settings);
-    exositeAgent.provision();
+    exositeAgent <- Exosite(EXOSITE_MODES.PDAAS_PRODUCT, settings);
+    exositeAgent.provision(provision_callback);
+    exositeAgent.getClaimCode();
 
     //Enable debugMode that was defaulted to false
-    exositeAgent.debugMode = true;
+    exositeAgent.setDebugMode(true);
 
-    device.on("reading.sent", exositeAgent.writeData.bindenv(exositeAgent));
+
+    //See if we think we need to provision (no token saved)
+    local settings = server.load();
+    if ("exosite_token" in settings) {
+        _token = settings.exosite_token;
+        exositeAgent.pollConfigIO(_token);
+     } else {
+        exositeAgent.provision(provision_callback.bindenv(this));
+     }
+
+    device.on("reading.sent", onDataRecieved.bindenv(this));
 //END LOCAL AGENT CODE
 
 //*********************************************************
