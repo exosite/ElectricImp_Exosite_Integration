@@ -121,7 +121,7 @@ class Exosite {
 
         server.log("Actual Input: " + _configIO);
         _idConversionTable  = _create_channel_converter_table(_configIO);
-        local req = http.post(format("%sonep:v1/stack/alias", _baseURL), configIOHeaders, _configIO);
+        local req = http.post(format("%sonep:v1/stack/alias", _baseURL), configIOHeaders, config_io);
         req.sendasync(_responseErrorCheck.bindenv(this));
     }
 
