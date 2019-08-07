@@ -253,13 +253,14 @@ class Exosite {
     // Warning, this modifies the table provided.
     // It also returns it for readability
     function _match_with_config_io(data_table, id_conversion_table) {
-        foreach (key, value in data_table) {
-            if (key in id_conversion_table) {
-                data_table[id_conversion_table[key]] <- value;
-                delete data_table[key];
+        local converted_data_table = {};
+            foreach (key, value in data_table) {
+                if (key in id_conversion_table)
+                    converted_data_table[id_conversion_table[key]] <- value;
+                else
+                    converted_data_table[key] <- value;
             }
-        }
-        return data_table;
+        return converted_data_table;
     }
 
     //Private Function
