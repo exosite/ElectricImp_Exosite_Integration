@@ -257,8 +257,12 @@ class Exosite {
             foreach (key, value in data_table) {
                 if (key in id_conversion_table)
                     converted_data_table[id_conversion_table[key]] <- value;
-                else
-                    converted_data_table[key] <- value;
+                else {
+                    if(key in converted_data_table)
+                        server.log("WARNING: Repeat channel ID, dropping data");
+                    else
+                        converted_data_table[key] <- value;
+                }
             }
         return converted_data_table;
     }
