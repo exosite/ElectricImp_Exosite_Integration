@@ -39,9 +39,14 @@ class Exosite {
      //Common headers for most all requests
      _headers              = {};
      _configIOHeaders      = {};
+
+     //Variables that could be set in settings
      _deviceId             = null;
-     _configIO             = null;
      _productId            = null;
+     _saveToken            = false;
+
+     _configIO             = null;
+     local _token          = null;
 
      // constructor
      // Returns: Nothing
@@ -54,9 +59,21 @@ class Exosite {
 
         _baseURL = format("https://%s.m2.exosite.io/", _productId);
         _deviceId = (_tableGet(settings, "deviceId") == null) ?  _getDeviceFromURL(http.agenturl()) : settings.deviceId;
+        _saveToken = (_tableGet(settings, "saveToken") == null) ?  false : settings.saveToken;
 
         _headers["Content-Type"] <- "application/x-www-form-urlencoded; charset=utf-8";
         _headers["Accept"] <- "application/x-www-form-urlencoded; charset=utf-8";
+
+        if (_saveToken) {
+            //See if we think we need to provision (no token saved)
+            local settings = server.load();
+            if ("exosite_token" in settings) {
+                _token = settings.exosite_token;
+                pollConfigIO(_token);
+            } else {
+                provision(provision_callback.bindenv(this));
+            }
+        }
     }
 
     //Provision - send a provision HTTP request
@@ -70,6 +87,32 @@ class Exosite {
         local data = format("id=%s", _deviceId);
         local req = http.post(activate_url, _headers, data);
         req.sendasync(callback);
+    }
+
+
+    // Used if we are saving the token and managing this inside the library
+    //    By default the user is doing this in their own agent code
+    function provision_callback(response) {
+        if (response.statuscode == 200) {
+            _token = response.body;
+
+            local settings = server.load();
+            settings.exosite_token <- _token;
+            local result = server.save(settings);
+            if (result != 0) server.error("Could not save settings!");
+        } else if (response.statuscode == 409) {
+            server.log("Response error, may be trying to provision an already provisioned device");
+        } else {
+            server.log("Token not recieved. Error: " + response.statuscode);
+        }
+
+        pollConfigIO(_token);
+    }
+
+    // writeData without a token
+    function writeData(table) {
+        // token should have been set in the constructor for this use case
+        if (_token != null) writeData(table, _token);
     }
 
     // writeData - Write a table to the "data_in" channel in the Exosite product
