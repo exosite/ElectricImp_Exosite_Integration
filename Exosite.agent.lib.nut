@@ -24,11 +24,11 @@
 
 enum EXOSITE_MODES {
     MURANO_PRODUCT = "EXOSITE_MODE_MURANO_PRODUCT"
-    PDAAS_PRODUCT = "EXOSITE_MODE_PDAAS_PRODUCT"
+    IOT_CONNECTOR = "EXOSITE_MODE_IOT_CONNECTOR"
 }
 
 class Exosite {
-      static PDAAS_PRODUCT_ID = "e3yjz9seyegq00000";
+      static IOT_CONNECTOR_ID = "e3yjz9seyegq00000";
       static VERSION = "1.0.0";
 
      //set to true to log debug message on the ElectricImp server
@@ -193,8 +193,8 @@ class Exosite {
                     server.error("Mode MuranoProduct requires a productId in settings");
                 }
                 break;
-            case EXOSITE_MODES.PDAAS_PRODUCT:
-                productId = PDAAS_PRODUCT_ID;
+            case EXOSITE_MODES.IOT_CONNECTOR:
+                productId = IOT_CONNECTOR_ID;
                 break;
             default:
                 server.error("No product ID found");
@@ -295,13 +295,13 @@ class Exosite {
 
     function _get_claim_code_w_cb(callback) {
         // This is only valid in Product as a Service
-        if (_mode != EXOSITE_MODES.PDAAS_PRODUCT) {
+        if (_mode != EXOSITE_MODES.IOT_CONNECTOR) {
             server.log("Attempting to get a claim code with invalid mode");
             return;
         }
 
         server.log("Requesting Claim code for: " + _deviceId);
-        local url = format("https://%s.apps.exosite.io/api/devices/%s/reset", PDAAS_PRODUCT_ID, _deviceId);
+        local url = format("https://%s.apps.exosite.io/api/devices/%s/reset", IOT_CONNECTOR_ID, _deviceId);
         local req = http.get(url, _headers);
         req.sendasync(callback.bindenv(this));
     }
@@ -390,7 +390,7 @@ class Exosite {
         return response.statuscode;
     }
 
-    // getClaimCode - Get's the claim code of the device for the user to claim in PDaaS
+    // getClaimCode - Get's the claim code of the device for the user to claim in the IOT_CONNECTOR
     //                 Note, the device must be provisioned.
     //
     //  Returns: string - Claim code
@@ -441,7 +441,7 @@ function onDataRecieved(data) {
     //settings.productId <- PRODUCT_ID;
 
 //    exositeAgent <- Exosite("MuranoProduct", settings);
-    exositeAgent <- Exosite(EXOSITE_MODES.PDAAS_PRODUCT, settings);
+    exositeAgent <- Exosite(EXOSITE_MODES.IOT_CONNECTOR, settings);
     exositeAgent.provision(provision_callback);
     exositeAgent.getClaimCode();
 
