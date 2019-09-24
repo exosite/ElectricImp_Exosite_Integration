@@ -42,7 +42,7 @@ class MuranoTestCase extends ImpTestCase {
     default_test_settings = {};
 
     function setUp() {
-        default_test_settings.productId <- "c449gfcd11ky00000";
+        default_test_settings.productId <- "f578ej9ehrcc00000";
 
         if (!_actually_test) return;
         _exositeAgent = Exosite(EXOSITE_MODES.MURANO_PRODUCT, default_test_settings);

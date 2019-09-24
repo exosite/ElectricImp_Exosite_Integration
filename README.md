@@ -206,6 +206,14 @@ The `EXOSITE_MODES.MURANO_PRODUCT` mode should be selected when a user has their
 | *productId* | String | Yes | The Murano Product ID to connect and send data to |
 | *deviceId*  | String | No  | The Device ID to provision as. If not provided, the Electric Imp agent ID will be used. This must be unique between devices in the product |
 
+### IoT Connector ###
+
+The `Exosite_modes.iot_connector` mode should be selected when connecting to ExoSense using the [ElectricImp IoT Connector Service](https://www.exosite.io/business//exchange/catalog/component/5d88eb136dc761ccebf20079)
+
+| Key | Type | Required? | Description |
+| -- | -- | -- | -- |
+| N/A| N/A | N/A | Currently no settings are required when using the IoT Connector Mode |
+
 #### Example Settings ####
 
 ```squirrel

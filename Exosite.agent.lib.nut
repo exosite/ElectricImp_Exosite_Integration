@@ -24,9 +24,11 @@
 
 enum EXOSITE_MODES {
     MURANO_PRODUCT = "EXOSITE_MODE_MURANO_PRODUCT"
+    IOT_CONNECTOR = "EXOSITE_MODE_IOT_CONNECTOR"
 }
 
 class Exosite {
+      static IOT_CONNECTOR_ID = "g2bmsijv2ku800000";
       static VERSION = "1.0.0";
 
      //set to true to log debug message on the ElectricImp server
@@ -45,6 +47,7 @@ class Exosite {
      //Used to convert a key to the corresponding channel_id in config_io
      _idConversionTable    = null; 
      _productId            = null;
+     _mode                 = null;
 
      // constructor
      // Returns: Nothing
@@ -53,10 +56,15 @@ class Exosite {
      //      settings (required) : table - The settings corresponding to the mode being run.
      //
     constructor(mode, settings) {
+        _mode = mode;
         _productId = _getProductId(mode, settings);
 
         _baseURL = format("https://%s.m2.exosite.io/", _productId);
-        _deviceId = (_tableGet(settings, "deviceId") == null) ?  _getDeviceFromURL(http.agenturl()) : settings.deviceId;
+
+        if (_mode == EXOSITE_MODES.IOT_CONNECTOR) 
+            _deviceId = _getDeviceFromURL(http.agenturl());
+        else
+            _deviceId = (_tableGet(settings, "deviceId") == null) ?  _getDeviceFromURL(http.agenturl()) : settings.deviceId;
 
         _headers["Content-Type"] <- "application/x-www-form-urlencoded; charset=utf-8";
         _headers["Accept"] <- "application/x-www-form-urlencoded; charset=utf-8";
@@ -188,6 +196,9 @@ class Exosite {
                 if (productId == null) {
                     server.error("Mode MuranoProduct requires a productId in settings");
                 }
+                break;
+            case EXOSITE_MODES.IOT_CONNECTOR:
+                productId = IOT_CONNECTOR_ID;
                 break;
             default:
                 server.error("No product ID found");
