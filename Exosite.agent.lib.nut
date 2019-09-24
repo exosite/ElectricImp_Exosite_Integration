@@ -28,7 +28,7 @@ enum EXOSITE_MODES {
 }
 
 class Exosite {
-      static IOT_CONNECTOR_ID = "e3yjz9seyegq00000";
+      static IOT_CONNECTOR_ID = "g2bmsijv2ku800000";
       static VERSION = "1.0.0";
 
      //set to true to log debug message on the ElectricImp server
@@ -60,7 +60,13 @@ class Exosite {
         _productId = _getProductId(mode, settings);
 
         _baseURL = format("https://%s.m2.exosite.io/", _productId);
-        _deviceId = (_tableGet(settings, "deviceId") == null) ?  _getDeviceFromURL(http.agenturl()) : settings.deviceId;
+
+        if (_mode == EXOSITE_MODES.IOT_CONNECTOR) {
+            _deviceId = _getDeviceFromURL(http.agenturl());
+        }
+        else{
+            _deviceId = (_tableGet(settings, "deviceId") == null) ?  _getDeviceFromURL(http.agenturl()) : settings.deviceId;
+        }
 
         _headers["Content-Type"] <- "application/x-www-form-urlencoded; charset=utf-8";
         _headers["Accept"] <- "application/x-www-form-urlencoded; charset=utf-8";
@@ -273,7 +279,6 @@ class Exosite {
             }
         return converted_data_table;
     }
->>>>>>> master
 
     //Private Function
     // this is here to assist in testing, otherwise we would just have the writeData() function
@@ -406,70 +411,3 @@ class Exosite {
         }
     }
 }
-
-//*********************************************************
-// Local Run of Agent Code
-// Uncommnent the following code to test the agent locally (not released to electricImp)
-// Limitations of ElectricImp require this all to be in the same file.
-//*********************************************************
-//BEGIN LOCAL AGENT CODE
-local _token = null;
-
-function provision_callback(response) {
-    if (response.statuscode == 200) {
-        _token = response.body;
-
-        local settings = server.load();
-        settings.exosite_token <- _token;
-        local result = server.save(settings);
-        if (result != 0) server.error("Could not save settings!");
-    } else if (response.statuscode == 409) {
-        server.log("Response error, may be trying to provision an already provisioned device");
-    } else {
-        server.log("Token not recieved. Error: " + response.statuscode);
-    }
-
-    exositeAgent.pollConfigIO(_token);
-}
-
-function onDataRecieved(data) {
-    if (_token != null) exositeAgent.writeData(data, _token);
-}
-    //const PRODUCT_ID = "f578ej9ehrcc00000";
-
-    local settings = {};
-    //settings.productId <- PRODUCT_ID;
-
-//    exositeAgent <- Exosite("MuranoProduct", settings);
-    exositeAgent <- Exosite(EXOSITE_MODES.IOT_CONNECTOR, settings);
-    exositeAgent.provision(provision_callback);
-    exositeAgent.getClaimCode();
-
-    //Enable debugMode that was defaulted to false
-    exositeAgent.setDebugMode(true);
-
-
-    //See if we think we need to provision (no token saved)
-    local settings = server.load();
-    if ("exosite_token" in settings) {
-        _token = settings.exosite_token;
-        exositeAgent.pollConfigIO(_token);
-     } else {
-        exositeAgent.provision(provision_callback.bindenv(this));
-     }
-
-    device.on("reading.sent", onDataRecieved.bindenv(this));
-//END LOCAL AGENT CODE
-
-//*********************************************************
-// Testing workaround
-// Uncomment the following block of code for tests to pass
-// Must be commented for relase
-//************************************************************
-//BEGIN TEST WORKAROUND
-    function noop(data) {
-        //Do nothing
-    }
-
-//    device.on("reading.sent", noop);
-//END TEST WORKAROUND
