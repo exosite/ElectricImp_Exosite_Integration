@@ -61,12 +61,10 @@ class Exosite {
 
         _baseURL = format("https://%s.m2.exosite.io/", _productId);
 
-        if (_mode == EXOSITE_MODES.IOT_CONNECTOR) {
+        if (_mode == EXOSITE_MODES.IOT_CONNECTOR) 
             _deviceId = _getDeviceFromURL(http.agenturl());
-        }
-        else{
+        else
             _deviceId = (_tableGet(settings, "deviceId") == null) ?  _getDeviceFromURL(http.agenturl()) : settings.deviceId;
-        }
 
         _headers["Content-Type"] <- "application/x-www-form-urlencoded; charset=utf-8";
         _headers["Accept"] <- "application/x-www-form-urlencoded; charset=utf-8";
@@ -298,19 +296,6 @@ class Exosite {
         req.sendasync(callback.bindenv(this));
     }
 
-    function _get_claim_code_w_cb(callback) {
-        // This is only valid in Product as a Service
-        if (_mode != EXOSITE_MODES.IOT_CONNECTOR) {
-            server.log("Attempting to get a claim code with invalid mode");
-            return;
-        }
-
-        server.log("Requesting Claim code for: " + _deviceId);
-        local url = format("https://%s.apps.exosite.io/api/devices/%s/reset", IOT_CONNECTOR_ID, _deviceId);
-        local req = http.get(url, _headers);
-        req.sendasync(callback.bindenv(this));
-    }
-
     function _configIOLoop() {
         if (_configIO != null) {
             //Long Poll for a change if we already have one. Else, just grab it
@@ -348,34 +333,6 @@ class Exosite {
         imp.wakeup(0.0, _configIOLoop.bindenv(this));
     }
 
-    // writeConfigIO - Writes a config via http post request
-    // Returns: null
-    // Parameters:
-    //            config_io : string - the config_io to post formatted as "config_io=<config_io_value>"
-    //
-    // The config_io is the 'contract' between the device and ExoSense of how the data is going to be transmitted
-    // See https://exosense.readme.io/docs/channel-configuration for more information
-    function writeConfigIO(config_io){
-        _debug("writeConfigIO: " + config_io);
-        _debug("headers: " + http.jsonencode(_headers));
-
-        _configIO = config_io;
-        local req = http.post(format("%sonep:v1/stack/alias", _baseURL), _headers, _configIO);
-        req.sendasync(_responseErrorCheck.bindenv(this));
-    }
-
-    // readAttribute - Fetches the given attribute from the Exosite server. 
-    // Returns: null
-    // Parameters: None
-    function readAttribute(attribute, callBack, token) {
-        _headers["X-Exosite-CIK"]  <-  token;
-        _debug("fetching attribute: " + attribute);
-        _debug("headers: " + http.jsonencode(_headers));
-
-        local req = http.get(format("%sonep:v1/stack/alias?%s", _baseURL, attribute), _headers);
-        req.sendasync(callBack.bindenv(this));
-    }
-
     // responseErrorCheck - Checks the status code of an http response and prints to the server log
     // Returns: The response's status code
     // Parameters:
@@ -393,21 +350,5 @@ class Exosite {
         _debug(response.body + "\n");
 
         return response.statuscode;
-    }
-
-    // getClaimCode - Get's the claim code of the device for the user to claim in the IOT_CONNECTOR
-    //                 Note, the device must be provisioned.
-    //
-    //  Returns: string - Claim code
-    function getClaimCode() {
-        _get_claim_code_w_cb(getClaimCode_Callback);
-    }
-
-    function getClaimCode_Callback(response){
-        if (response.statuscode == 200) {
-            server.log("Claim Code: " + response.body);
-        } else {
-            server.log(format("Error: Did not receive a claim code, Response Code: %d - Body:%s", response.statuscode, response.body));
-        }
     }
 }
