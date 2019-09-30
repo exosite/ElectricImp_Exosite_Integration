@@ -21,7 +21,7 @@ This library provides integration with [Exosite](https://exosite.com/iot-solutio
 * [Configuring Channels In ExoSense](#configuring-channels-in-exosense)
 * [Modes](#modes)
     * [MuranoProduct](#muranoproduct)
-    * [IOT_CONNECTOR](#iotconnector)
+    * [IOT_CONNECTOR](#iot-connector)
 * [Troubleshooting](#troubleshooting)
     * [Authorization Issues](#authorization-issues)
 
