@@ -29,7 +29,7 @@ enum EXOSITE_MODES {
 
 class Exosite {
       static IOT_CONNECTOR_ID = "g2bmsijv2ku800000";
-      static VERSION = "1.0.0";
+      static VERSION = "1.1.0";
 
      //set to true to log debug message on the ElectricImp server
      _debugMode             = false;
