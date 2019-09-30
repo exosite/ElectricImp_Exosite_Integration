@@ -21,6 +21,7 @@ This library provides integration with [Exosite](https://exosite.com/iot-solutio
 * [Configuring Channels In ExoSense](#configuring-channels-in-exosense)
 * [Modes](#modes)
     * [MuranoProduct](#muranoproduct)
+    * [IOT_CONNECTOR](#iotconnector)
 * [Troubleshooting](#troubleshooting)
     * [Authorization Issues](#authorization-issues)
 
@@ -216,7 +217,7 @@ settings.deviceId  = "device0001";
 
 ### IoT Connector ###
 
-The `Exosite_modes.iot_connector` mode should be selected when connecting to ExoSense using the [ElectricImp IoT Connector Service](https://www.exosite.io/business//exchange/catalog/component/5d88eb136dc761ccebf20079)
+The `Exosite_modes.IOT_CONNECTOR` mode should be selected when connecting to ExoSense using the [ElectricImp IoT Connector Service](https://www.exosite.io/business//exchange/catalog/component/5d88eb136dc761ccebf20079)
 
 #### Settings ####
 
