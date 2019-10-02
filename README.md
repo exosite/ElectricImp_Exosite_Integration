@@ -2,7 +2,7 @@
 
 This library provides integration with [Exosite](https://exosite.com/iot-solutions/condition-monitoring/) by wrapping the [Exosite HTTPS Device API](http://docs.exosite.com/reference/products/device-api/http/).
 
-**To include this library in your project, add** `#require "Exosite.agent.lib.nut:1.0.0"` **at the top of your agent code**
+**To include this library in your project, add** `#require "Exosite.agent.lib.nut:1.1.0"` **at the top of your agent code**
 
 ## Contents ##
 
