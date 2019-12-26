@@ -52,11 +52,11 @@ function onDataRecieved(data) {
 }
 
 local settings = {};
-settings.productId <- PRODUCT_ID;;
+settings.productId <- PRODUCT_ID;
 
 exositeAgent <- Exosite(EXOSITE_MODES.MURANO_PRODUCT, settings);
 //Enable debugMode that was defaulted to false
-exositeAgent.setDebugMode(true);;
+exositeAgent.setDebugMode(true);
 
 //See if we think we need to provision (no token saved)
 local settings = server.load();
