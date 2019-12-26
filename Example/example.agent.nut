@@ -25,7 +25,7 @@
 //example.agent.nut
 // This example code recieves a data table from the device and posts to ExoSense on the "data_in" channel
 
-#require "Exosite.agent.lib.nut:1.0.0"
+#require "Exosite.agent.lib.nut:1.1.0"
 
 const PRODUCT_ID = "<my_product_id>";
 local _token = null;
@@ -52,11 +52,11 @@ function onDataRecieved(data) {
 }
 
 local settings = {};
-settings.productId <- PRODUCT_ID;;
+settings.productId <- PRODUCT_ID;
 
 exositeAgent <- Exosite(EXOSITE_MODES.MURANO_PRODUCT, settings);
 //Enable debugMode that was defaulted to false
-exositeAgent.setDebugMode(true);;
+exositeAgent.setDebugMode(true);
 
 //See if we think we need to provision (no token saved)
 local settings = server.load();
