@@ -291,8 +291,10 @@ class Exosite {
         writeDataHeaders["X-Exosite-CIK"]  <-  token;
         _debug("writeData: " + http.jsonencode(table));
         _debug("headers: " + http.jsonencode(_headers));
-
-        local req = http.post(format("%sonep:v1/stack/alias", _baseURL), writeDataHeaders, "data_in=" + http.jsonencode(table));
+        
+        local jsonString = http.jsonencode(table);
+        local postBody = http.urlencode({ "data_in" : jsonString });
+        local req = http.post(format("%sonep:v1/stack/alias", _baseURL), writeDataHeaders, postBody);
         req.sendasync(callback.bindenv(this));
     }
 
