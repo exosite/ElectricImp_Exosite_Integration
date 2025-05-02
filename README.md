@@ -21,7 +21,7 @@ This library provides integration with [Exosite](https://exosite.com/iot-solutio
 * [Configuring Channels In ExoSense](#configuring-channels-in-exosense)
 * [Modes](#modes)
     * [MuranoProduct](#muranoproduct)
-    * [IOT_CONNECTOR](#iot-connector)
+    * [IoT Connector](#iot-connector)
 * [Troubleshooting](#troubleshooting)
     * [Authorization Issues](#authorization-issues)
 
@@ -176,21 +176,22 @@ Changes the timeout length for a configIO long poll, defaults to 15000000 ms
 Nothing.
 
 ## Configuring Channels In ExoSense ##
-To configure the channels in ExoSense to read correctly from the device. The key that the device uses for the data needs to be defined.
 
-To achieve this, the user must have a `Custom` **Protocol**, with `ElectricImp` as the **Application**, and `{"key":<device's corresponding key>}` as the **app_specific_config**
+In order to configure the channels in ExoSense to read information from the device correctly, the key that the device uses for the data needs to be defined.
 
-For example, if the device calls
-```
+To achieve this, the user must have a `Custom` **Protocol**, with `ElectricImp` as the **Application** and `{"key":<device's corresponding key>}` as the **app_specific_config**.
+
+For example, if the device calls the following Squirrel code:
+
+```squirrel
 local conditions = {};
 conditions.temp <- reading.temperature;
 agent.send("reading.sent", conditions);
 ```
 
-A corresponding channel configuration could look like the following:
+A corresponding channel configuration would look like this:
 
 ![](media/ChannelConfigurationExample.png)
-
 
 ## Modes ##
 
@@ -217,14 +218,11 @@ settings.deviceId  = "device0001";
 
 ### IoT Connector ###
 
-The `Exosite_modes.IOT_CONNECTOR` mode should be selected when connecting to ExoSense using the [ElectricImp IoT Connector Service](https://www.exosite.io/business//exchange/catalog/component/5d88eb136dc761ccebf20079)
+The `Exosite_modes.IOT_CONNECTOR` mode should be selected when connecting to ExoSense using the [ElectricImp IoT Connector Service](https://www.exosite.io/business//exchange/catalog/component/5d88eb136dc761ccebf20079).
 
 #### Settings ####
 
-| Key | Type | Required? | Description |
-| -- | -- | -- | -- |
-| N/A| N/A | N/A | Currently no settings are required when using the IoT Connector Mode |
-
+Currently no settings are required when using the IoT Connector mode.
 
 ## Troubleshooting ##
 
